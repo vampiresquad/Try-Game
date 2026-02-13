@@ -1,250 +1,206 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-<title>TRY — Neon Quiz Game</title>
-
-<!-- PWA -->
-<link rel="manifest" href="manifest.json">
-<meta name="theme-color" content="#00ffcc">
-
-<!-- Google Fonts -->
-<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
-
-<!-- CSS -->
-<link rel="stylesheet" href="css/style.css">
-<link rel="stylesheet" href="css/responsive.css">
-
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>TRY - Ultimate System v5.0</title>
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#00f3ff">
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;700;900&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/responsive.css">
 </head>
-<body>
-
-<!-- ================= BOOT SCREEN ================= -->
-<div id="bootScreen">
-    <div class="boot-terminal">
-        <h1 class="neon-text">TRY SYSTEM INITIALIZING</h1>
-        <div class="boot-log" id="bootLog"></div>
-        <div class="boot-progress">
-            <div id="bootBar"></div>
+<body class="theme-cyan"> <div id="boot-screen">
+        <div class="terminal-loader">
+            <div class="text">SYSTEM_INITIALIZING_V5.0...</div>
+            <div class="progress-line"></div>
+            <div class="log" id="boot-log">LOADING MODULES...</div>
         </div>
     </div>
-</div>
 
+    <div class="cyber-container hidden" id="main-app">
+        
+        <header class="top-bar">
+            <div class="profile-info" onclick="ui.openModal('profile')">
+                <div class="avatar"><i class="fas fa-user-secret"></i></div>
+                <div class="stats">
+                    <span id="player-name-display">Agent</span>
+                    <span class="level-badge">LVL <span id="current-level">1</span></span>
+                </div>
+            </div>
+            <div class="currency" onclick="ui.openModal('shop')">
+                <i class="fas fa-microchip neon-icon"></i> <span id="user-points">0</span>
+            </div>
+        </header>
 
-<!-- ================= MAIN APP ================= -->
-<div id="app" class="hidden">
+        <section id="home-screen" class="screen active">
+            <div class="logo-area">
+                <h1 class="glitch-text" data-text="TRY">TRY</h1>
+                <p class="subtitle">SECURE CONNECTION ESTABLISHED</p>
+            </div>
+            
+            <div class="mining-widget" onclick="ui.openModal('mining')">
+                <i class="fas fa-hammer"></i> MINING: <span id="mining-rate-display">0</span> BITS/H
+            </div>
 
-<header class="top-bar">
-    <div class="logo neon-text">TRY</div>
+            <div class="menu-grid">
+                <button class="cyber-btn primary" onclick="app.showCategorySelection()">
+                    <i class="fas fa-play"></i> START MISSION
+                </button>
+                <div class="btn-row">
+                    <button class="cyber-btn secondary" onclick="ui.openModal('achievements')">
+                        <i class="fas fa-medal"></i> BADGES
+                    </button>
+                    <button class="cyber-btn secondary" onclick="ui.openModal('shop')">
+                        <i class="fas fa-shopping-cart"></i> MARKET
+                    </button>
+                </div>
+                <div class="btn-row">
+                    <button class="cyber-btn secondary" onclick="ui.openModal('leaderboard')">
+                        <i class="fas fa-trophy"></i> RANK
+                    </button>
+                    <button class="cyber-btn danger-outline" onclick="ui.openModal('settings')">
+                        <i class="fas fa-cog"></i> CONFIG
+                    </button>
+                </div>
+            </div>
+        </section>
 
-    <div class="top-stats">
-        <span>BITS: <b id="bitsCount">0</b></span>
-        <span>LEVEL: <b id="levelCount">1</b></span>
-    </div>
-</header>
+        <section id="category-screen" class="screen hidden">
+            <h2 class="screen-title">SELECT TARGET</h2>
+            <div class="category-list" id="category-container">
+                <div class="cat-card" onclick="app.startGame('cyber_security')"><i class="fas fa-shield-alt"></i><span>CYBER SECURITY</span></div>
+                <div class="cat-card" onclick="app.startGame('general')"><i class="fas fa-brain"></i><span>GENERAL KNOWLEDGE</span></div>
+                <div class="cat-card" onclick="app.startGame('islamic')"><i class="fas fa-moon"></i><span>ISLAMIC</span></div>
+                <div class="cat-card" onclick="app.startGame('mixed')"><i class="fas fa-random"></i><span>MIXED MODE</span></div>
+            </div>
+            <button class="back-btn" onclick="app.goHome()">ABORT</button>
+        </section>
 
+        <section id="game-screen" class="screen hidden">
+            <div id="breach-overlay" class="hidden">WARNING: BREACH DETECTED</div>
+            <div class="game-hud">
+                <div class="progress-bar-container"><div class="progress-fill" id="timer-bar"></div></div>
+                <div class="combo-text hidden" id="combo-display">COMBO x2!</div>
+                <div class="lifelines">
+                    <button id="life-5050" class="life-btn" onclick="app.useLifeline('5050')">50:50 <span class="count-badge" id="qty-5050">0</span></button>
+                    <button id="life-skip" class="life-btn" onclick="app.useLifeline('skip')">SKIP <span class="count-badge" id="qty-skip">0</span></button>
+                </div>
+            </div>
+            <div class="question-area">
+                <span class="q-badge">QUERY <span id="q-current">1</span>/<span id="q-total">10</span></span>
+                <h3 id="question-text">Loading...</h3>
+            </div>
+            <div class="options-area" id="options-container"></div>
+        </section>
 
-<!-- ================= NAVIGATION ================= -->
-<nav class="bottom-nav">
-    <button data-screen="home">HOME</button>
-    <button data-screen="play">PLAY</button>
-    <button data-screen="profile">PROFILE</button>
-    <button data-screen="store">STORE</button>
-    <button data-screen="leaderboard">RANK</button>
-</nav>
+        <section id="result-screen" class="screen hidden">
+            <div class="result-box">
+                <h2 id="result-title">MISSION COMPLETE</h2>
+                <div class="score-circle">
+                    <span id="final-score">0</span>
+                    <small>BITS EARNED</small>
+                </div>
+                <div class="stats-grid">
+                    <div class="stat">Correct: <span id="res-correct" class="green">0</span></div>
+                    <div class="stat">Wrong: <span id="res-wrong" class="red">0</span></div>
+                </div>
+                <button class="cyber-btn secondary" onclick="app.shareScore()"><i class="fas fa-share-alt"></i> CHALLENGE FRIENDS</button>
+                <br>
+                <button class="cyber-btn primary" onclick="app.goHome()">RETURN TO BASE</button>
+            </div>
+        </section>
 
+        <footer class="game-footer">Developed by <span class="author-name">Muhammad Shourov</span></footer>
 
-<!-- ================= SCREENS ================= -->
+        <div id="modal-overlay" class="hidden">
+            
+            <div id="modal-register" class="modal-box hidden">
+                <h3>IDENTITY VERIFICATION</h3>
+                <input type="text" id="reg-name" class="cyber-input" placeholder="Enter Codename" maxlength="15">
+                <input type="number" id="reg-age" class="cyber-input" placeholder="Enter Age" max="99">
+                <button class="cyber-btn primary" onclick="app.registerUser()">GRANT ACCESS</button>
+            </div>
 
-<!-- HOME -->
-<section id="homeScreen" class="screen active">
-    <h2 class="neon-text">WELCOME TO TRY</h2>
-    <p>Professional Neon Quiz Experience</p>
+            <div id="modal-mining" class="modal-box hidden">
+                <h3>CRYPTO MINER v1.0</h3>
+                <div class="mining-animation"><i class="fas fa-server"></i> <i class="fas fa-network-wired"></i> <i class="fas fa-coins"></i></div>
+                <p>Pending: <span id="mining-pending" class="green">0</span> BITS</p>
+                <p>Rate: <span id="mining-rate-modal">0</span> BITS/Hour</p>
+                <button class="cyber-btn primary" onclick="store.claimMining()">CLAIM REWARD</button>
+                <hr class="neon-line">
+                <button class="cyber-btn secondary" onclick="store.upgradeMiner()">UPGRADE RIG (500 BITS)</button>
+                <button class="cyber-btn small" onclick="ui.closeModal()">CLOSE</button>
+            </div>
 
-    <button class="primary-btn" id="startGameBtn">
-        START QUIZ
-    </button>
-</section>
+            <div id="modal-achievements" class="modal-box hidden">
+                <h3>MEDALS & HONORS</h3>
+                <div class="achievement-list" id="achievement-list">
+                    </div>
+                <button class="cyber-btn small" onclick="ui.closeModal()">CLOSE</button>
+            </div>
 
+            <div id="modal-shop" class="modal-box hidden">
+                <h3>BLACK MARKET</h3>
+                <div class="tab-menu">
+                    <button class="tab-btn active" onclick="ui.switchShopTab('items')">ITEMS</button>
+                    <button class="tab-btn" onclick="ui.switchShopTab('themes')">THEMES</button>
+                </div>
+                <p class="balance">Balance: <span id="shop-balance">0</span> BITS</p>
+                
+                <div id="shop-items" class="shop-content">
+                    <div class="shop-grid">
+                        <div class="shop-item" onclick="store.buyItem('5050', 50)"><i class="fas fa-cut"></i><span>50:50</span><small>50 BITS</small></div>
+                        <div class="shop-item" onclick="store.buyItem('skip', 80)"><i class="fas fa-forward"></i><span>Skip</span><small>80 BITS</small></div>
+                    </div>
+                </div>
 
-<!-- PLAY -->
-<section id="playScreen" class="screen">
+                <div id="shop-themes" class="shop-content hidden">
+                    <div class="shop-grid">
+                        <div class="shop-item" onclick="store.buyTheme('cyan', 0)"><i class="fas fa-circle" style="color:#00f3ff"></i><span>CYAN (Default)</span><small>OWNED</small></div>
+                        <div class="shop-item" onclick="store.buyTheme('green', 1000)"><i class="fas fa-circle" style="color:#0f0"></i><span>MATRIX</span><small>1000 BITS</small></div>
+                        <div class="shop-item" onclick="store.buyTheme('gold', 2500)"><i class="fas fa-circle" style="color:#ffd700"></i><span>GOLD</span><small>2500 BITS</small></div>
+                        <div class="shop-item" onclick="store.buyTheme('red', 5000)"><i class="fas fa-circle" style="color:#ff0000"></i><span>RED ERROR</span><small>5000 BITS</small></div>
+                    </div>
+                </div>
+                <button class="cyber-btn small" onclick="ui.closeModal()">EXIT</button>
+            </div>
 
-    <div class="quiz-header">
-        <span id="questionCategory">Category</span>
-        <span id="timer">30</span>
-    </div>
+            <div id="modal-profile" class="modal-box hidden">
+                <h3>AGENT DOSSIER</h3>
+                <div class="modal-content profile-stats">
+                    <div class="p-row"><span>Name:</span> <span id="p-name">--</span></div>
+                    <div class="p-row"><span>Rank:</span> <span id="p-rank">--</span></div>
+                    <div class="p-row"><span>XP:</span> <span id="p-xp">0</span></div>
+                    <div class="p-row"><span>Accuracy:</span> <span id="p-acc">0%</span></div>
+                </div>
+                <button class="cyber-btn small" onclick="ui.closeModal()">CLOSE</button>
+            </div>
 
-    <div class="question-box">
-        <h3 id="questionText">Question Loading...</h3>
-    </div>
+            <div id="modal-leaderboard" class="modal-box hidden">
+                <h3>GLOBAL RANKING</h3>
+                <div class="leaderboard-list" id="leaderboard-list"></div>
+                <button class="cyber-btn small" onclick="ui.closeModal()">CLOSE</button>
+            </div>
 
-    <div class="answers-grid">
-        <button class="answer-btn"></button>
-        <button class="answer-btn"></button>
-        <button class="answer-btn"></button>
-        <button class="answer-btn"></button>
-    </div>
+            <div id="modal-settings" class="modal-box hidden">
+                <h3>SYSTEM CONFIG</h3>
+                <div class="setting-row"><span>Sound</span> <button class="toggle-btn on" id="btn-sound" onclick="app.toggleSound()">ON</button></div>
+                <div class="setting-row"><span>Reset Data</span> <button class="cyber-btn danger small" onclick="store.resetData()">RESET</button></div>
+                <button class="cyber-btn small" onclick="ui.closeModal()">SAVE & EXIT</button>
+            </div>
 
-    <div class="lifeline-bar">
-        <button id="lifeline5050">50 : 50</button>
-        <button id="lifelineSkip">SKIP</button>
-    </div>
-
-</section>
-
-
-<!-- PROFILE -->
-<section id="profileScreen" class="screen">
-
-    <h2 class="neon-text">PLAYER PROFILE</h2>
-
-    <div class="profile-card">
-
-        <p>Name : <span id="profileName">---</span></p>
-        <p>Age : <span id="profileAge">---</span></p>
-        <p>Rank : <span id="profileRank">Script Kiddie</span></p>
-
-        <hr>
-
-        <p>Games Played : <span id="gamesPlayed">0</span></p>
-        <p>Total Questions : <span id="totalQuestions">0</span></p>
-        <p>Correct : <span id="correctAnswers">0</span></p>
-        <p>Wrong : <span id="wrongAnswers">0</span></p>
-        <p>Accuracy : <span id="accuracyRate">0%</span></p>
-
-    </div>
-
-</section>
-
-
-<!-- STORE -->
-<section id="storeScreen" class="screen">
-
-    <h2 class="neon-text">BLACK MARKET</h2>
-
-    <div class="store-grid">
-
-        <div class="store-item">
-            <h3>50 : 50 Lifeline</h3>
-            <button>BUY</button>
         </div>
-
-        <div class="store-item">
-            <h3>Skip Question</h3>
-            <button>BUY</button>
-        </div>
-
     </div>
 
-</section>
-
-
-<!-- LEADERBOARD -->
-<section id="leaderboardScreen" class="screen">
-
-    <h2 class="neon-text">GLOBAL RANK</h2>
-
-    <div id="leaderboardList">
-        No Data Yet
-    </div>
-
-</section>
-
-
-<footer>
-    Developed by Muhammad Shourov
-</footer>
-
-</div>
-
-
-<!-- ================= REGISTER MODAL ================= -->
-<div id="registerModal" class="modal">
-
-    <div class="modal-content">
-        <h2 class="neon-text">ENTER IDENTITY</h2>
-
-        <input type="text" id="playerNameInput" placeholder="Enter Name">
-        <input type="number" id="playerAgeInput" placeholder="Enter Age">
-
-        <button id="registerBtn">ENTER GAME</button>
-    </div>
-
-</div>
-
-
-<!-- ================= SHARE MODAL ================= -->
-<div id="shareModal" class="modal">
-    <div class="modal-content">
-        <h2>Challenge Friends</h2>
-        <p id="sharePreview"></p>
-        <button id="shareBtn">Share Score</button>
-    </div>
-</div>
-
-
-<!-- ================= SCANLINE EFFECT ================= -->
-<div class="scanlines"></div>
-
-
-<!-- ================= SCRIPTS ================= -->
-<script src="js/questions.js"></script>
-<script src="js/app.js"></script>
-
-<script>
-
-// Boot Simulation
-const bootLines = [
-"Loading Core Engine...",
-"Decrypting Question Bank...",
-"Establishing Secure Session...",
-"Launching Neural UI...",
-"Ready."
-];
-
-let bootIndex = 0;
-let bootProgress = 0;
-
-const bootLog = document.getElementById("bootLog");
-const bootBar = document.getElementById("bootBar");
-
-const bootInterval = setInterval(() => {
-
-if(bootIndex < bootLines.length){
-    bootLog.innerHTML += bootLines[bootIndex] + "<br>";
-    bootIndex++;
-}
-
-bootProgress += 20;
-bootBar.style.width = bootProgress + "%";
-
-if(bootProgress >= 100){
-    clearInterval(bootInterval);
-
-    setTimeout(()=>{
-        document.getElementById("bootScreen").style.display="none";
-        document.getElementById("app").classList.remove("hidden");
-        document.getElementById("registerModal").style.display="flex";
-    },1000);
-}
-
-},800);
-
-
-// Navigation
-document.querySelectorAll(".bottom-nav button").forEach(btn=>{
-btn.onclick = () => {
-
-document.querySelectorAll(".screen").forEach(s=>s.classList.remove("active"));
-
-document.getElementById(btn.dataset.screen + "Screen").classList.add("active");
-
-};
-});
-
-</script>
-
+    <script src="js/questions.js"></script>
+    <script src="js/app.js"></script>
+    <script>
+        // Register PWA Service Worker
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('service-worker.js');
+        }
+    </script>
 </body>
 </html>
