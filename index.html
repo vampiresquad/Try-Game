@@ -1,219 +1,250 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>TRY · NEON QUIZ</title>
-    <meta name="description" content="Cyberpunk quiz game with multiple categories, lifelines, and leaderboard.">
-    <meta name="theme-color" content="#0a0a0a">
-    <link rel="manifest" href="manifest.json">
-    <link rel="apple-touch-icon" href="assets/icons/icon-192.png">
-    <link rel="stylesheet" href="css/style.css">
-    <link rel="stylesheet" href="css/responsive.css">
-    <!-- Google Fonts for hacker style -->
-    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Share+Tech+Mono&display=swap" rel="stylesheet">
-    <!-- Bangla font support -->
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Bengali:wght@400;700&display=swap" rel="stylesheet">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>TRY — Neon Quiz Game</title>
+
+<!-- PWA -->
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#00ffcc">
+
+<!-- Google Fonts -->
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+
+<!-- CSS -->
+<link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="css/responsive.css">
+
 </head>
 <body>
-    <!-- BOOT SEQUENCE / LOADING SCREEN -->
-    <div id="boot-screen" class="boot-screen">
-        <div class="boot-content">
-            <pre class="ascii-logo">
-████████╗██████╗ ██╗   ██╗
-╚══██╔══╝██╔══██╗╚██╗ ██╔╝
-   ██║   ██████╔╝ ╚████╔╝ 
-   ██║   ██╔══██╗  ╚██╔╝  
-   ██║   ██║  ██║   ██║   
-   ╚═╝   ╚═╝  ╚═╝   ╚═╝   
-            </pre>
-            <div class="boot-text">>> INITIALIZING NEURAL INTERFACE...</div>
-            <div class="boot-progress"><span style="width:0%"></span></div>
-            <div class="boot-status">[ SYSTEM BOOT ]</div>
+
+<!-- ================= BOOT SCREEN ================= -->
+<div id="bootScreen">
+    <div class="boot-terminal">
+        <h1 class="neon-text">TRY SYSTEM INITIALIZING</h1>
+        <div class="boot-log" id="bootLog"></div>
+        <div class="boot-progress">
+            <div id="bootBar"></div>
         </div>
     </div>
+</div>
 
-    <!-- MAIN APP CONTAINER -->
-    <div id="app" style="display: none;">
-        <!-- REGISTRATION MODAL -->
-        <div id="register-modal" class="modal-overlay">
-            <div class="modal-container">
-                <h2 class="neon-text">>> IDENTITY REQUIRED</h2>
-                <form id="register-form">
-                    <div class="input-field">
-                        <label>AGENT NAME</label>
-                        <input type="text" id="reg-name" placeholder="H4CK3R" maxlength="20" required>
-                    </div>
-                    <div class="input-field">
-                        <label>AGE (YEARS)</label>
-                        <input type="number" id="reg-age" min="1" max="120" required>
-                    </div>
-                    <button type="submit" class="btn-primary">>> AUTHENTICATE</button>
-                </form>
-                <p class="credit-small">Developed by Muhammad Shourov</p>
-            </div>
-        </div>
 
-        <!-- MAIN MENU VIEW -->
-        <div id="menu-view" class="view hidden">
-            <header class="app-header">
-                <h1 class="glitch" data-text="TRY">TRY</h1>
-                <div class="user-status">
-                    <span id="menu-username">AGENT</span> | 
-                    <span id="menu-level">LVL 0</span> | 
-                    <span id="menu-bits">0 BITS</span>
-                </div>
-            </header>
+<!-- ================= MAIN APP ================= -->
+<div id="app" class="hidden">
 
-            <nav class="menu-grid">
-                <button class="menu-item" data-view="play">PLAY</button>
-                <button class="menu-item" data-view="profile">PROFILE</button>
-                <button class="menu-item" data-view="leaderboard">LEADERBOARD</button>
-                <button class="menu-item" data-view="shop">BLACK MARKET</button>
-                <button class="menu-item" data-view="achievements">ACHIEVEMENTS</button>
-            </nav>
+<header class="top-bar">
+    <div class="logo neon-text">TRY</div>
 
-            <!-- Mining status -->
-            <div class="mining-status">
-                <span>> CRYPTO MINING: <span id="mining-amount">0</span> BITS</span>
-                <button id="collect-mining" class="btn-small">COLLECT</button>
-            </div>
+    <div class="top-stats">
+        <span>BITS: <b id="bitsCount">0</b></span>
+        <span>LEVEL: <b id="levelCount">1</b></span>
+    </div>
+</header>
 
-            <footer class="app-footer">
-                <p>Developed by Muhammad Shourov</p>
-            </footer>
-        </div>
 
-        <!-- PLAY VIEW (category selection) -->
-        <div id="play-view" class="view hidden">
-            <header class="view-header">
-                <button class="back-btn" data-view="menu">BACK</button>
-                <h2>SELECT CHALLENGE</h2>
-            </header>
-            <div class="category-grid">
-                <button class="category-card" data-cat="all">ALL COMBINED</button>
-                <button class="category-card" data-cat="cyber">CYBER SECURITY</button>
-                <button class="category-card" data-cat="islamic">ISLAMIC</button>
-                <button class="category-card" data-cat="general">GENERAL</button>
-                <button class="category-card" data-cat="world">WORLD WIDE</button>
-                <button class="category-card" data-cat="mixed">MIXED KNOWLEDGE</button>
-            </div>
-        </div>
+<!-- ================= NAVIGATION ================= -->
+<nav class="bottom-nav">
+    <button data-screen="home">HOME</button>
+    <button data-screen="play">PLAY</button>
+    <button data-screen="profile">PROFILE</button>
+    <button data-screen="store">STORE</button>
+    <button data-screen="leaderboard">RANK</button>
+</nav>
 
-        <!-- QUIZ VIEW -->
-        <div id="quiz-view" class="view hidden">
-            <div class="quiz-header">
-                <div class="quiz-stats">
-                    <span>LVL <span id="quiz-level">0</span></span>
-                    <span>BITS <span id="quiz-bits">0</span></span>
-                    <span>TIME <span id="quiz-timer">30</span>s</span>
-                </div>
-                <div class="quiz-progress">
-                    <span id="quiz-current">1</span>/<span id="quiz-total">10</span>
-                </div>
-            </div>
 
-            <div id="quiz-question" class="quiz-question">Loading...</div>
+<!-- ================= SCREENS ================= -->
 
-            <div id="quiz-options" class="quiz-options"></div>
+<!-- HOME -->
+<section id="homeScreen" class="screen active">
+    <h2 class="neon-text">WELCOME TO TRY</h2>
+    <p>Professional Neon Quiz Experience</p>
 
-            <div class="lifeline-bar">
-                <button id="lifeline-5050" class="lifeline-btn" data-cost="50">50:50 (50)</button>
-                <button id="lifeline-skip" class="lifeline-btn" data-cost="30">SKIP (30)</button>
-            </div>
-        </div>
+    <button class="primary-btn" id="startGameBtn">
+        START QUIZ
+    </button>
+</section>
 
-        <!-- RESULT VIEW -->
-        <div id="result-view" class="view hidden">
-            <div class="result-box">
-                <h2>MISSION REPORT</h2>
-                <div class="result-stats">
-                    <p>SCORE: <span id="result-score">0</span></p>
-                    <p>CORRECT: <span id="result-correct">0</span></p>
-                    <p>WRONG: <span id="result-wrong">0</span></p>
-                    <p>BITS EARNED: <span id="result-bits">0</span></p>
-                    <p>XP GAINED: <span id="result-xp">0</span></p>
-                </div>
-                <div class="result-actions">
-                    <button id="share-score" class="btn-primary">SHARE & CHALLENGE</button>
-                    <button id="play-again" class="btn-secondary">PLAY AGAIN</button>
-                    <button id="back-to-menu" class="btn-text">MENU</button>
-                </div>
-            </div>
-        </div>
 
-        <!-- PROFILE VIEW -->
-        <div id="profile-view" class="view hidden">
-            <header class="view-header">
-                <button class="back-btn" data-view="menu">BACK</button>
-                <h2>AGENT PROFILE</h2>
-            </header>
-            <div class="profile-card">
-                <p><span class="label">NAME:</span> <span id="profile-name">-</span></p>
-                <p><span class="label">AGE:</span> <span id="profile-age">-</span></p>
-                <p><span class="label">RANK:</span> <span id="profile-rank">Script Kiddie</span></p>
-                <p><span class="label">GAMES PLAYED:</span> <span id="profile-games">0</span></p>
-                <p><span class="label">TOTAL Q/A:</span> <span id="profile-total">0</span></p>
-                <p><span class="label">CORRECT:</span> <span id="profile-correct">0</span></p>
-                <p><span class="label">WRONG:</span> <span id="profile-wrong">0</span></p>
-                <p><span class="label">ACCURACY:</span> <span id="profile-accuracy">0%</span></p>
-                <p><span class="label">LEVEL:</span> <span id="profile-level">0</span></p>
-                <p><span class="label">BITS:</span> <span id="profile-bits">0</span></p>
-            </div>
-            <div class="credit-fixed">Developed by Muhammad Shourov</div>
-        </div>
+<!-- PLAY -->
+<section id="playScreen" class="screen">
 
-        <!-- LEADERBOARD VIEW -->
-        <div id="leaderboard-view" class="view hidden">
-            <header class="view-header">
-                <button class="back-btn" data-view="menu">BACK</button>
-                <h2>GLOBAL RANK</h2>
-            </header>
-            <div id="leaderboard-list" class="leaderboard-list">
-                <!-- populated via JS -->
-            </div>
-        </div>
-
-        <!-- SHOP VIEW (Black Market) -->
-        <div id="shop-view" class="view hidden">
-            <header class="view-header">
-                <button class="back-btn" data-view="menu">BACK</button>
-                <h2>BLACK MARKET</h2>
-            </header>
-            <div class="shop-items">
-                <div class="shop-item">
-                    <span class="item-name">50:50 LIFELINE</span>
-                    <span class="item-cost">50 BITS</span>
-                    <button class="btn-buy" data-item="5050">BUY</button>
-                </div>
-                <div class="shop-item">
-                    <span class="item-name">SKIP LIFELINE</span>
-                    <span class="item-cost">30 BITS</span>
-                    <button class="btn-buy" data-item="skip">BUY</button>
-                </div>
-            </div>
-        </div>
-
-        <!-- ACHIEVEMENTS VIEW -->
-        <div id="achievements-view" class="view hidden">
-            <header class="view-header">
-                <button class="back-btn" data-view="menu">BACK</button>
-                <h2>ACHIEVEMENTS</h2>
-            </header>
-            <div id="achievements-list" class="achievements-list"></div>
-        </div>
+    <div class="quiz-header">
+        <span id="questionCategory">Category</span>
+        <span id="timer">30</span>
     </div>
 
-    <script src="js/questions.js"></script>
-    <script src="js/app.js"></script>
-    <script>
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-                navigator.serviceWorker.register('/service-worker.js')
-                    .then(reg => console.log('Service Worker registered:', reg))
-                    .catch(err => console.error('Service Worker registration failed:', err));
-            });
-        }
-    </script>
+    <div class="question-box">
+        <h3 id="questionText">Question Loading...</h3>
+    </div>
+
+    <div class="answers-grid">
+        <button class="answer-btn"></button>
+        <button class="answer-btn"></button>
+        <button class="answer-btn"></button>
+        <button class="answer-btn"></button>
+    </div>
+
+    <div class="lifeline-bar">
+        <button id="lifeline5050">50 : 50</button>
+        <button id="lifelineSkip">SKIP</button>
+    </div>
+
+</section>
+
+
+<!-- PROFILE -->
+<section id="profileScreen" class="screen">
+
+    <h2 class="neon-text">PLAYER PROFILE</h2>
+
+    <div class="profile-card">
+
+        <p>Name : <span id="profileName">---</span></p>
+        <p>Age : <span id="profileAge">---</span></p>
+        <p>Rank : <span id="profileRank">Script Kiddie</span></p>
+
+        <hr>
+
+        <p>Games Played : <span id="gamesPlayed">0</span></p>
+        <p>Total Questions : <span id="totalQuestions">0</span></p>
+        <p>Correct : <span id="correctAnswers">0</span></p>
+        <p>Wrong : <span id="wrongAnswers">0</span></p>
+        <p>Accuracy : <span id="accuracyRate">0%</span></p>
+
+    </div>
+
+</section>
+
+
+<!-- STORE -->
+<section id="storeScreen" class="screen">
+
+    <h2 class="neon-text">BLACK MARKET</h2>
+
+    <div class="store-grid">
+
+        <div class="store-item">
+            <h3>50 : 50 Lifeline</h3>
+            <button>BUY</button>
+        </div>
+
+        <div class="store-item">
+            <h3>Skip Question</h3>
+            <button>BUY</button>
+        </div>
+
+    </div>
+
+</section>
+
+
+<!-- LEADERBOARD -->
+<section id="leaderboardScreen" class="screen">
+
+    <h2 class="neon-text">GLOBAL RANK</h2>
+
+    <div id="leaderboardList">
+        No Data Yet
+    </div>
+
+</section>
+
+
+<footer>
+    Developed by Muhammad Shourov
+</footer>
+
+</div>
+
+
+<!-- ================= REGISTER MODAL ================= -->
+<div id="registerModal" class="modal">
+
+    <div class="modal-content">
+        <h2 class="neon-text">ENTER IDENTITY</h2>
+
+        <input type="text" id="playerNameInput" placeholder="Enter Name">
+        <input type="number" id="playerAgeInput" placeholder="Enter Age">
+
+        <button id="registerBtn">ENTER GAME</button>
+    </div>
+
+</div>
+
+
+<!-- ================= SHARE MODAL ================= -->
+<div id="shareModal" class="modal">
+    <div class="modal-content">
+        <h2>Challenge Friends</h2>
+        <p id="sharePreview"></p>
+        <button id="shareBtn">Share Score</button>
+    </div>
+</div>
+
+
+<!-- ================= SCANLINE EFFECT ================= -->
+<div class="scanlines"></div>
+
+
+<!-- ================= SCRIPTS ================= -->
+<script src="js/questions.js"></script>
+<script src="js/app.js"></script>
+
+<script>
+
+// Boot Simulation
+const bootLines = [
+"Loading Core Engine...",
+"Decrypting Question Bank...",
+"Establishing Secure Session...",
+"Launching Neural UI...",
+"Ready."
+];
+
+let bootIndex = 0;
+let bootProgress = 0;
+
+const bootLog = document.getElementById("bootLog");
+const bootBar = document.getElementById("bootBar");
+
+const bootInterval = setInterval(() => {
+
+if(bootIndex < bootLines.length){
+    bootLog.innerHTML += bootLines[bootIndex] + "<br>";
+    bootIndex++;
+}
+
+bootProgress += 20;
+bootBar.style.width = bootProgress + "%";
+
+if(bootProgress >= 100){
+    clearInterval(bootInterval);
+
+    setTimeout(()=>{
+        document.getElementById("bootScreen").style.display="none";
+        document.getElementById("app").classList.remove("hidden");
+        document.getElementById("registerModal").style.display="flex";
+    },1000);
+}
+
+},800);
+
+
+// Navigation
+document.querySelectorAll(".bottom-nav button").forEach(btn=>{
+btn.onclick = () => {
+
+document.querySelectorAll(".screen").forEach(s=>s.classList.remove("active"));
+
+document.getElementById(btn.dataset.screen + "Screen").classList.add("active");
+
+};
+});
+
+</script>
+
 </body>
 </html>
