@@ -1,447 +1,339 @@
-/* TRY - ULTIMATE QUIZ SYSTEM ENGINE 
-    Developed by Muhammad Shourov
-    Version: 4.0 (Final Release)
+/* TRY - ULTIMATE QUIZ SYSTEM ENGINE v5.0
+   Developed by Muhammad Shourov
+   Features: PWA, Mining, Themes, Breach Mode, Achievements
 */
 
-// --- 1. DATA STORE & LOCAL STORAGE ---
+// --- 1. DATA STORE ---
 const store = {
-    // Default Data Schema
     data: {
-        name: null,       // User Name
-        age: null,        // User Age
-        xp: 0,
-        level: 1,
+        name: null, age: null, xp: 0, level: 1,
         inventory: { '5050': 2, 'skip': 2 },
-        stats: {
-            matchesPlayed: 0,
-            totalQuestions: 0,
-            correctAnswers: 0,
-            wrongAnswers: 0
-        },
+        mining: { rate: 0, lastClaim: Date.now() },
+        themes: { current: 'cyan', owned: ['cyan'] },
+        stats: { matches: 0, totalQ: 0, correct: 0, wrong: 0, consecutive: 0 },
+        achievements: [], // List of unlocked IDs
         settings: { sound: true }
     },
+    
+    // Achievement List
+    achievList: [
+        { id: 'first_win', title: 'First Blood', desc: 'Complete your first match', reward: 50 },
+        { id: 'richie', title: 'Richie Rich', desc: 'Accumulate 1000 BITS', reward: 100 },
+        { id: 'sniper', title: 'Sniper', desc: 'Get 5 correct answers in a row', reward: 200 },
+        { id: 'miner', title: 'Crypto Miner', desc: 'Upgrade mining rig once', reward: 150 }
+    ],
 
     load: function() {
-        const saved = localStorage.getItem('try_data_v4');
+        const saved = localStorage.getItem('try_v5_data');
         if (saved) {
-            this.data = JSON.parse(saved);
+            const parsed = JSON.parse(saved);
+            this.data = { ...this.data, ...parsed }; // Merge to avoid missing new keys
         }
+        this.applyTheme(this.data.themes.current);
     },
 
     save: function() {
-        localStorage.setItem('try_data_v4', JSON.stringify(this.data));
-        ui.updateAll(); // Update UI whenever saved
+        localStorage.setItem('try_v5_data', JSON.stringify(this.data));
+        ui.updateAll();
     },
 
-    // Registration Logic
     register: function(name, age) {
-        this.data.name = name;
-        this.data.age = age;
+        this.data.name = name; this.data.age = age;
         this.save();
     },
 
-    // Progress Logic
+    // --- ECONOMY & MINING ---
     addXP: function(amount) {
         this.data.xp += amount;
         this.data.level = Math.floor(this.data.xp / 100) + 1;
+        this.checkAchievements();
         this.save();
     },
 
-    updateStats: function(isCorrect) {
-        this.data.stats.totalQuestions++;
-        if(isCorrect) this.data.stats.correctAnswers++;
-        else this.data.stats.wrongAnswers++;
-        this.save();
+    calculateMining: function() {
+        const now = Date.now();
+        const hours = (now - this.data.mining.lastClaim) / (1000 * 60 * 60);
+        return Math.floor(hours * this.data.mining.rate);
     },
 
-    finishMatch: function() {
-        this.data.stats.matchesPlayed++;
-        this.save();
-    },
-
-    // Shop Logic
-    buyItem: function(type, cost) {
-        if(this.data.xp >= cost) {
-            this.data.xp -= cost;
-            this.data.inventory[type]++;
+    claimMining: function() {
+        const amount = this.calculateMining();
+        if (amount > 0) {
+            this.addXP(amount);
+            this.data.mining.lastClaim = Date.now();
             this.save();
             sfx.correct();
-            alert(`Purchased: ${type.toUpperCase()}`);
+            alert(`Claimed ${amount} BITS from mining!`);
         } else {
-            sfx.wrong();
-            alert("Insufficient BITS!");
+            alert("Mining in progress... Wait longer.");
         }
     },
 
-    useItem: function(type) {
-        if(this.data.inventory[type] > 0) {
-            this.data.inventory[type]--;
+    upgradeMiner: function() {
+        if (this.data.xp >= 500) {
+            this.data.xp -= 500;
+            this.data.mining.rate += 10; // +10 BITS/Hour
+            this.unlockAchievement('miner');
             this.save();
-            return true;
-        }
-        return false;
+            sfx.correct();
+            alert("Rig Upgraded! Rate +10 BITS/H");
+        } else alert("Insufficient BITS!");
     },
 
-    resetData: function() {
-        if(confirm("WARNING: This will delete your identity and progress. Continue?")) {
-            localStorage.removeItem('try_data_v4');
-            location.reload();
+    // --- THEMES ---
+    buyTheme: function(theme, cost) {
+        if (this.data.themes.owned.includes(theme)) {
+            this.data.themes.current = theme;
+            this.applyTheme(theme);
+            this.save();
+            alert(`Theme Applied: ${theme.toUpperCase()}`);
+        } else if (this.data.xp >= cost) {
+            this.data.xp -= cost;
+            this.data.themes.owned.push(theme);
+            this.data.themes.current = theme;
+            this.applyTheme(theme);
+            this.save();
+            sfx.correct();
+            alert("Theme Purchased & Applied!");
+        } else alert("Insufficient BITS!");
+    },
+
+    applyTheme: function(theme) {
+        document.body.className = `theme-${theme}`;
+    },
+
+    // --- ACHIEVEMENTS ---
+    checkAchievements: function() {
+        if (this.data.xp >= 1000) this.unlockAchievement('richie');
+        if (this.data.stats.matches >= 1) this.unlockAchievement('first_win');
+        if (this.data.stats.consecutive >= 5) this.unlockAchievement('sniper');
+    },
+
+    unlockAchievement: function(id) {
+        if (!this.data.achievements.includes(id)) {
+            this.data.achievements.push(id);
+            const ach = this.achievList.find(a => a.id === id);
+            this.data.xp += ach.reward;
+            this.save();
+            alert(`🏆 ACHIEVEMENT UNLOCKED: ${ach.title}\nReward: ${ach.reward} BITS`);
+            sfx.correct();
         }
+    },
+    
+    // --- RESET ---
+    resetData: function() {
+        if(confirm("Factory Reset?")) { localStorage.removeItem('try_v5_data'); location.reload(); }
     }
 };
 
-// --- 2. SOUND & HAPTIC ENGINE (Code Generated) ---
+// --- 2. SOUND ENGINE ---
 const sfx = {
     ctx: null,
-    init: function() {
-        if(!store.data.settings.sound) return;
-        if(!this.ctx) this.ctx = new (window.AudioContext || window.webkitAudioContext)();
-    },
-    playTone: function(freq, type, duration) {
+    init: function() { if(store.data.settings.sound && !this.ctx) this.ctx = new (window.AudioContext || window.webkitAudioContext)(); },
+    tone: function(f, t, d) {
         if(!store.data.settings.sound || !this.ctx) { this.init(); return; }
-        if(!this.ctx) return;
-        const osc = this.ctx.createOscillator();
-        const gain = this.ctx.createGain();
-        osc.type = type;
-        osc.frequency.setValueAtTime(freq, this.ctx.currentTime);
-        gain.gain.setValueAtTime(0.05, this.ctx.currentTime);
-        gain.gain.exponentialRampToValueAtTime(0.0001, this.ctx.currentTime + duration);
-        osc.connect(gain);
-        gain.connect(this.ctx.destination);
-        osc.start();
-        osc.stop(this.ctx.currentTime + duration);
+        const o = this.ctx.createOscillator(), g = this.ctx.createGain();
+        o.type = t; o.frequency.setValueAtTime(f, this.ctx.currentTime);
+        g.gain.setValueAtTime(0.05, this.ctx.currentTime); g.gain.exponentialRampToValueAtTime(0.0001, this.ctx.currentTime+d);
+        o.connect(g); g.connect(this.ctx.destination); o.start(); o.stop(this.ctx.currentTime+d);
     },
-    click: () => { sfx.playTone(800, 'square', 0.05); navigator.vibrate?.(10); },
-    correct: () => { sfx.playTone(600, 'sine', 0.1); setTimeout(() => sfx.playTone(1200, 'sine', 0.2), 100); navigator.vibrate?.([50, 50]); },
-    wrong: () => { sfx.playTone(150, 'sawtooth', 0.3); navigator.vibrate?.(200); }
+    click: () => { sfx.tone(800, 'square', 0.05); navigator.vibrate?.(10); },
+    correct: () => { sfx.tone(600, 'sine', 0.1); setTimeout(() => sfx.tone(1200, 'sine', 0.2), 100); navigator.vibrate?.([50,50]); },
+    wrong: () => { sfx.tone(150, 'sawtooth', 0.3); navigator.vibrate?.(200); },
+    alarm: () => { sfx.tone(800, 'sawtooth', 0.5); setTimeout(() => sfx.tone(600, 'sawtooth', 0.5), 500); }
 };
 
 // --- 3. UI CONTROLLER ---
 const ui = {
-    screens: {
-        home: document.getElementById('home-screen'),
-        category: document.getElementById('category-screen'),
-        game: document.getElementById('game-screen'),
-        result: document.getElementById('result-screen')
-    },
-
+    screens: { home: document.getElementById('home-screen'), category: document.getElementById('category-screen'), game: document.getElementById('game-screen'), result: document.getElementById('result-screen') },
+    
     showScreen: function(name) {
-        Object.values(this.screens).forEach(s => {
-            s.classList.remove('active');
-            s.classList.add('hidden');
-        });
-        this.screens[name].classList.remove('hidden');
-        this.screens[name].classList.add('active');
+        Object.values(this.screens).forEach(s => { s.classList.remove('active'); s.classList.add('hidden'); });
+        this.screens[name].classList.remove('hidden'); this.screens[name].classList.add('active');
     },
 
     openModal: function(type) {
         sfx.click();
-        const overlay = document.getElementById('modal-overlay');
-        overlay.classList.remove('hidden');
-        
+        document.getElementById('modal-overlay').classList.remove('hidden');
         document.querySelectorAll('.modal-box').forEach(b => b.classList.add('hidden'));
+        document.getElementById(`modal-${type}`).classList.remove('hidden');
         
-        const modal = document.getElementById(`modal-${type}`);
-        modal.classList.remove('hidden');
-
-        // Prevent closing registration modal
-        if(type === 'register') {
-            overlay.onclick = null; // Disable background click close
-        } else {
-            // Background click closes other modals
-            overlay.onclick = (e) => {
-                if(e.target === overlay) ui.closeModal();
-            };
-        }
-
-        if(type === 'leaderboard') app.generateLeaderboard();
+        if (type === 'leaderboard') app.genLeaderboard();
+        if (type === 'achievements') app.genAchievements();
+        if (type === 'register') document.getElementById('modal-overlay').onclick = null;
+        else document.getElementById('modal-overlay').onclick = (e) => { if(e.target.id === 'modal-overlay') ui.closeModal(); };
+        
         ui.updateAll();
     },
 
-    closeModal: function() {
-        sfx.click();
-        document.getElementById('modal-overlay').classList.add('hidden');
+    closeModal: function() { sfx.click(); document.getElementById('modal-overlay').classList.add('hidden'); },
+
+    switchShopTab: function(tab) {
+        document.querySelectorAll('.shop-content').forEach(c => c.classList.add('hidden'));
+        document.getElementById(`shop-${tab}`).classList.remove('hidden');
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        event.target.classList.add('active');
     },
 
     updateAll: function() {
-        // Safe Update
-        const safeSet = (id, val) => { const el = document.getElementById(id); if(el) el.innerText = val; };
-
-        // Header
-        safeSet('user-points', store.data.xp);
-        safeSet('current-level', store.data.level);
-        safeSet('player-name-display', store.data.name || "Agent");
-
-        // Profile Modal
-        safeSet('p-name', store.data.name || "Unknown");
-        safeSet('p-age', store.data.age || "--");
-        safeSet('p-xp', store.data.xp);
-        safeSet('p-matches', store.data.stats.matchesPlayed);
-        safeSet('p-total-q', store.data.stats.totalQuestions);
-        safeSet('p-correct', store.data.stats.correctAnswers);
-        safeSet('p-wrong', store.data.stats.wrongAnswers);
-
-        // Rank Calculation
-        const rankEl = document.getElementById('p-rank');
-        if(rankEl) {
-            const lvl = store.data.level;
-            if(lvl < 5) rankEl.innerText = "Script Kiddie";
-            else if(lvl < 10) rankEl.innerText = "White Hat";
-            else if(lvl < 20) rankEl.innerText = "Cyber Ninja";
-            else rankEl.innerText = "Elite Phantom";
-        }
-
-        // Shop & Game
-        safeSet('shop-balance', store.data.xp);
-        safeSet('qty-5050', store.data.inventory['5050']);
-        safeSet('qty-skip', store.data.inventory['skip']);
+        const safe = (id, val) => { const el = document.getElementById(id); if(el) el.innerText = val; };
+        safe('user-points', store.data.xp); safe('current-level', store.data.level); safe('player-name-display', store.data.name || "Agent");
+        safe('shop-balance', store.data.xp); safe('mining-rate-display', store.data.mining.rate);
+        safe('mining-rate-modal', store.data.mining.rate); safe('mining-pending', store.calculateMining());
+        safe('qty-5050', store.data.inventory['5050']); safe('qty-skip', store.data.inventory['skip']);
         
-        // Settings
-        const sndBtn = document.getElementById('btn-sound');
-        if(sndBtn) {
-            sndBtn.innerText = store.data.settings.sound ? "ON" : "OFF";
-            sndBtn.className = store.data.settings.sound ? "toggle-btn on" : "toggle-btn";
-        }
+        // Profile
+        safe('p-name', store.data.name); safe('p-xp', store.data.xp);
+        safe('p-rank', store.data.level < 5 ? "Script Kiddie" : store.data.level < 10 ? "Hacker" : "Elite Phantom");
+        const acc = store.data.stats.totalQ > 0 ? Math.round((store.data.stats.correct / store.data.stats.totalQ)*100) : 0;
+        safe('p-acc', acc + "%");
     }
 };
 
-// --- 4. MAIN APPLICATION LOGIC ---
+// --- 4. MAIN APP ---
 const app = {
-    currentQuestions: [],
-    qIndex: 0,
-    score: 0,
-    combo: 0,
-    timer: null,
-    timeLeft: 100,
-    gameActive: false,
+    qs: [], qIdx: 0, score: 0, timer: null, timeLeft: 100, isBreach: false, active: false,
 
     init: function() {
-        // Boot Sequence
-        setTimeout(() => { document.getElementById('boot-log').innerText = "LOADING USER DATA..."; }, 1500);
-        
-        setTimeout(() => {
-            document.getElementById('boot-screen').style.display = 'none';
-            document.getElementById('main-app').classList.remove('hidden');
-            store.load();
-
-            // CHECK REGISTRATION
-            if(!store.data.name) {
-                ui.openModal('register');
-            } else {
-                ui.updateAll();
-            }
-        }, 2500);
-
+        setTimeout(() => { document.getElementById('boot-screen').style.display = 'none'; document.getElementById('main-app').classList.remove('hidden'); store.load(); if(!store.data.name) ui.openModal('register'); }, 2500);
         document.body.addEventListener('click', () => sfx.init(), { once: true });
+        setInterval(() => ui.updateAll(), 60000); // Auto update mining UI every minute
     },
 
     registerUser: function() {
         const name = document.getElementById('reg-name').value.trim();
         const age = document.getElementById('reg-age').value.trim();
-
-        if(name.length > 2 && age > 0) {
-            sfx.correct();
-            store.register(name, age);
-            ui.closeModal();
-            alert(`Welcome, Agent ${name}. System unlocked.`);
-        } else {
-            sfx.wrong();
-            alert("Invalid Identity. Please enter valid Name and Age.");
-        }
+        if(name.length > 2 && age > 0) { store.register(name, age); ui.closeModal(); } else alert("Invalid Input");
     },
 
-    toggleSound: function() {
-        store.data.settings.sound = !store.data.settings.sound;
-        store.save();
-    },
-
-    showCategorySelection: function() {
-        sfx.click();
-        ui.showScreen('category');
-    },
+    showCategorySelection: function() { sfx.click(); ui.showScreen('category'); },
 
     startGame: function(cat) {
         sfx.click();
-        let qs = (cat === 'mixed') ? window.questionBank : window.questionBank.filter(q => q.category === cat);
+        let list = (cat === 'mixed') ? window.questionBank : window.questionBank.filter(q => q.category === cat);
+        if(!list.length) { alert("No Data"); return; }
         
-        if (!qs || qs.length < 1) { alert("No Questions Found!"); return; }
+        // BREACH MODE CHECK (Every 5 levels)
+        this.isBreach = (store.data.level % 5 === 0 && store.data.level > 0);
         
-        this.currentQuestions = qs.sort(() => Math.random() - 0.5).slice(0, 10);
-        this.qIndex = 0;
-        this.score = 0;
-        this.combo = 0;
-        this.gameActive = true;
+        this.qs = list.sort(() => Math.random() - 0.5).slice(0, this.isBreach ? 5 : 10);
+        this.qIdx = 0; this.score = 0; this.active = true; store.data.stats.consecutive = 0;
         
+        const screen = document.getElementById('game-screen');
+        const overlay = document.getElementById('breach-overlay');
+        
+        if (this.isBreach) {
+            screen.classList.add('breach-mode');
+            overlay.classList.remove('hidden');
+            sfx.alarm();
+        } else {
+            screen.classList.remove('breach-mode');
+            overlay.classList.add('hidden');
+        }
+
         ui.showScreen('game');
-        this.loadQuestion();
+        this.loadQ();
     },
 
-    loadQuestion: function() {
-        if (this.qIndex >= this.currentQuestions.length) {
-            this.endGame();
-            return;
-        }
-        const q = this.currentQuestions[this.qIndex];
-        
-        // Update UI
-        document.getElementById('q-current').innerText = this.qIndex + 1;
-        document.getElementById('q-total').innerText = this.currentQuestions.length;
+    loadQ: function() {
+        if (this.qIdx >= this.qs.length) { this.endGame(); return; }
+        const q = this.qs[this.qIdx];
+        document.getElementById('q-current').innerText = this.qIdx + 1;
+        document.getElementById('q-total').innerText = this.qs.length;
         document.getElementById('question-text').innerText = q.question;
-        
-        const container = document.getElementById('options-container');
-        container.innerHTML = '';
+        const cont = document.getElementById('options-container'); cont.innerHTML = '';
         q.options.forEach(opt => {
-            const btn = document.createElement('button');
-            btn.className = 'option-btn';
-            btn.innerText = opt;
-            btn.onclick = () => app.handleAnswer(opt, btn);
-            container.appendChild(btn);
+            const btn = document.createElement('button'); btn.className = 'option-btn'; btn.innerText = opt;
+            btn.onclick = () => this.handle(opt, btn); cont.appendChild(btn);
         });
-
         this.startTimer();
     },
 
-    handleAnswer: function(selected, btn) {
-        if (!this.gameActive) return;
-        clearInterval(this.timer);
+    handle: function(sel, btn) {
+        if(!this.active) return; clearInterval(this.timer);
+        const cor = this.qs[this.qIdx].answer === sel;
         
-        const correct = this.currentQuestions[this.qIndex].answer;
-        const isCorrect = (selected === correct);
+        // Stats
+        store.data.stats.totalQ++;
+        if(cor) { store.data.stats.correct++; store.data.stats.consecutive++; } 
+        else { store.data.stats.wrong++; store.data.stats.consecutive = 0; }
 
-        // Update Stats
-        store.updateStats(isCorrect);
-
-        if (isCorrect) {
-            this.combo++;
-            let points = 10;
-            if (this.combo > 1) {
-                points += 5;
-                const cEl = document.getElementById('combo-display');
-                cEl.innerText = `COMBO x${this.combo}!`;
-                cEl.classList.remove('hidden');
-                setTimeout(() => cEl.classList.add('hidden'), 1000);
-            }
-            this.score += points;
-            btn.classList.add('correct');
-            sfx.correct();
+        if(cor) {
+            this.score += this.isBreach ? 20 : 10; // Double points in Breach
+            btn.classList.add('correct'); sfx.correct();
         } else {
-            this.combo = 0;
-            btn.classList.add('wrong');
-            sfx.wrong();
-            // Highlight correct answer
-            Array.from(document.querySelectorAll('.option-btn')).forEach(b => {
-                if(b.innerText === correct) b.classList.add('correct');
-            });
+            btn.classList.add('wrong'); sfx.wrong();
+            // Breach Fail Condition
+            if(this.isBreach) { alert("BREACH FAILED! SYSTEM LOCKED."); this.endGame(); return; }
         }
-
-        setTimeout(() => {
-            this.qIndex++;
-            this.loadQuestion();
-        }, 1500);
+        
+        setTimeout(() => { this.qIdx++; this.loadQ(); }, 1500);
     },
 
     startTimer: function() {
-        clearInterval(this.timer);
-        this.timeLeft = 100;
+        clearInterval(this.timer); this.timeLeft = 100;
         const bar = document.getElementById('timer-bar');
-        bar.style.width = '100%';
-        bar.style.backgroundColor = 'var(--secondary-color)';
-
+        const speed = this.isBreach ? 100 : 150; // Faster in Breach
         this.timer = setInterval(() => {
-            this.timeLeft -= 1;
-            bar.style.width = this.timeLeft + '%';
-            if(this.timeLeft < 30) bar.style.backgroundColor = '#f00';
-            
-            if (this.timeLeft <= 0) {
-                clearInterval(this.timer);
-                sfx.wrong();
-                store.updateStats(false); // Time out = wrong
-                this.combo = 0;
-                this.qIndex++;
-                this.loadQuestion();
+            this.timeLeft -= 1; bar.style.width = this.timeLeft + '%';
+            if(this.timeLeft < 30) bar.style.backgroundColor = 'red';
+            else bar.style.backgroundColor = 'var(--secondary-color)';
+            if(this.timeLeft <= 0) {
+                clearInterval(this.timer); sfx.wrong();
+                if(this.isBreach) { alert("TIME OUT! BREACH FAILED."); this.endGame(); }
+                else { this.qIdx++; this.loadQ(); }
             }
-        }, 150);
+        }, speed);
     },
 
     useLifeline: function(type) {
-        sfx.click();
-        const btn = document.getElementById(`life-${type}`);
-        
-        if(store.useItem(type)) {
-            btn.style.opacity = '0.5';
-            btn.disabled = true;
-            
-            if (type === '5050') {
-                const correct = this.currentQuestions[this.qIndex].answer;
+        if(this.isBreach) { alert("LIFELINES DISABLED IN BREACH MODE!"); return; } // Hard mode
+        if(store.data.inventory[type] > 0) {
+            store.data.inventory[type]--;
+            if(type === 'skip') { clearInterval(this.timer); this.qIdx++; this.loadQ(); }
+            if(type === '5050') {
+                const ans = this.qs[this.qIdx].answer;
                 const opts = Array.from(document.querySelectorAll('.option-btn'));
-                let removed = 0;
-                opts.forEach(o => {
-                    if (o.innerText !== correct && removed < 2) {
-                        o.style.visibility = 'hidden';
-                        removed++;
-                    }
-                });
-            } else if (type === 'skip') {
-                clearInterval(this.timer);
-                this.qIndex++;
-                this.loadQuestion();
+                let r = 0; opts.forEach(o => { if(o.innerText !== ans && r < 2) { o.style.display = 'none'; r++; }});
             }
-        } else {
-            alert("No items left! Visit Market.");
-        }
+            ui.updateAll();
+        } else alert("Empty!");
     },
 
     endGame: function() {
-        this.gameActive = false;
-        clearInterval(this.timer);
+        this.active = false; clearInterval(this.timer);
+        store.data.stats.matches++;
         store.addXP(this.score);
-        store.finishMatch();
-        
         document.getElementById('final-score').innerText = this.score;
-        document.getElementById('res-correct').innerText = store.data.stats.correctAnswers; // Showing Total Stats in result for now or session stats? 
-        // Let's show Session Stats in Result for better UX, but we tracked Total. 
-        // For simplicity, showing score is enough here.
-        
+        document.getElementById('res-correct').innerText = store.data.stats.correct; // Show lifetime correct just for stats
+        document.getElementById('game-screen').classList.remove('breach-mode');
         ui.showScreen('result');
         if(this.score > 50) sfx.correct();
     },
 
-    goHome: function() {
-        sfx.click();
-        clearInterval(this.timer);
-        ui.closeModal();
-        ui.showScreen('home');
-    },
+    goHome: function() { sfx.click(); clearInterval(this.timer); ui.closeModal(); ui.showScreen('home'); },
 
     shareScore: function() {
-        const text = `⚠️ SYSTEM ALERT ⚠️\nAgent ${store.data.name} just scored ${this.score} BITS in TRY! \nRank: ${document.getElementById('p-rank').innerText}\nCan you beat me?`;
-        if (navigator.share) {
-            navigator.share({ title: 'TRY System', text: text, url: window.location.href });
-        } else {
-            navigator.clipboard.writeText(text);
-            alert("Score copied to clipboard!");
-        }
+        const t = `Agent ${store.data.name} scored ${this.score} BITS in TRY v5.0! Rank: ${document.getElementById('p-rank').innerText}`;
+        if(navigator.share) navigator.share({ title: 'TRY', text: t, url: location.href });
+        else { navigator.clipboard.writeText(t); alert("Copied!"); }
     },
 
-    generateLeaderboard: function() {
-        const list = document.getElementById('leaderboard-list');
-        list.innerHTML = '';
-        const ranks = [
-            { name: "VampireSquad", xp: 9999 },
-            { name: "Cyber_Wolf", xp: 5000 },
-            { name: "Zero_Cool", xp: 4200 },
-            { name: store.data.name || "You", xp: store.data.xp }
-        ].sort((a,b) => b.xp - a.xp);
+    toggleSound: function() { store.data.settings.sound = !store.data.settings.sound; store.save(); ui.updateAll(); },
 
-        ranks.forEach((r, i) => {
-            const div = document.createElement('div');
-            div.style.cssText = "display:flex; justify-content:space-between; padding:8px; border-bottom:1px solid #333; font-size:0.9rem;";
-            if(r.name === store.data.name) div.style.color = "var(--primary-color)";
-            div.innerHTML = `<span>#${i+1} ${r.name}</span> <span>${r.xp} XP</span>`;
-            list.appendChild(div);
+    genLeaderboard: function() {
+        const list = document.getElementById('leaderboard-list'); list.innerHTML = '';
+        const ranks = [{name:"VampireSquad",xp:9999}, {name:"AI_Ghost",xp:5000}, {name:store.data.name||"You",xp:store.data.xp}].sort((a,b)=>b.xp-a.xp);
+        ranks.forEach((r,i) => { list.innerHTML += `<div style="display:flex;justify-content:space-between;padding:10px;border-bottom:1px solid #333;color:${r.name===store.data.name?'var(--primary-color)':'#aaa'}"><span>#${i+1} ${r.name}</span><span>${r.xp} XP</span></div>`; });
+    },
+
+    genAchievements: function() {
+        const list = document.getElementById('achievement-list'); list.innerHTML = '';
+        store.achievList.forEach(a => {
+            const unlocked = store.data.achievements.includes(a.id);
+            list.innerHTML += `<div class="achievement-row ${unlocked ? 'unlocked' : ''}"><i class="fas fa-${unlocked ? 'check-circle' : 'lock'}"></i><div class="ach-info"><h4>${a.title}</h4><p>${a.desc}</p></div></div>`;
         });
     }
 };
 
-// INITIALIZE
 document.addEventListener('DOMContentLoaded', app.init);
