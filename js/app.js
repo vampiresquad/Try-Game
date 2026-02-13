@@ -1,54 +1,80 @@
-/* TRY SYSTEM v3.0 - ULTIMATE EDITION */
+/* TRY - ULTIMATE QUIZ SYSTEM ENGINE 
+    Developed by Muhammad Shourov
+    Version: 4.0 (Final Release)
+*/
 
-// --- 1. LOCAL STORAGE & DATA ---
+// --- 1. DATA STORE & LOCAL STORAGE ---
 const store = {
+    // Default Data Schema
     data: {
+        name: null,       // User Name
+        age: null,        // User Age
         xp: 0,
         level: 1,
-        matches: 0,
         inventory: { '5050': 2, 'skip': 2 },
-        highScore: 0
+        stats: {
+            matchesPlayed: 0,
+            totalQuestions: 0,
+            correctAnswers: 0,
+            wrongAnswers: 0
+        },
+        settings: { sound: true }
     },
 
     load: function() {
-        const saved = localStorage.getItem('try_v3_data');
-        if (saved) this.data = JSON.parse(saved);
-        this.updateUI();
+        const saved = localStorage.getItem('try_data_v4');
+        if (saved) {
+            this.data = JSON.parse(saved);
+        }
     },
 
     save: function() {
-        localStorage.setItem('try_v3_data', JSON.stringify(this.data));
-        this.updateUI();
+        localStorage.setItem('try_data_v4', JSON.stringify(this.data));
+        ui.updateAll(); // Update UI whenever saved
     },
 
-    addXP: function(amount) {
-        this.data.xp += amount;
-        this.data.level = Math.floor(this.data.xp / 100) + 1; // 100 XP = 1 Level
-        
-        // Update High Score
-        if (this.data.xp > this.data.highScore) {
-            this.data.highScore = this.data.xp;
-        }
-        
-        this.data.matches++;
+    // Registration Logic
+    register: function(name, age) {
+        this.data.name = name;
+        this.data.age = age;
         this.save();
     },
 
+    // Progress Logic
+    addXP: function(amount) {
+        this.data.xp += amount;
+        this.data.level = Math.floor(this.data.xp / 100) + 1;
+        this.save();
+    },
+
+    updateStats: function(isCorrect) {
+        this.data.stats.totalQuestions++;
+        if(isCorrect) this.data.stats.correctAnswers++;
+        else this.data.stats.wrongAnswers++;
+        this.save();
+    },
+
+    finishMatch: function() {
+        this.data.stats.matchesPlayed++;
+        this.save();
+    },
+
+    // Shop Logic
     buyItem: function(type, cost) {
-        if (this.data.xp >= cost) {
+        if(this.data.xp >= cost) {
             this.data.xp -= cost;
             this.data.inventory[type]++;
             this.save();
-            sfx.playCorrect();
-            ui.showToast(`Purchased: ${type.toUpperCase()}`);
+            sfx.correct();
+            alert(`Purchased: ${type.toUpperCase()}`);
         } else {
-            sfx.playWrong();
-            ui.showToast("Insufficient BITS!");
+            sfx.wrong();
+            alert("Insufficient BITS!");
         }
     },
 
     useItem: function(type) {
-        if (this.data.inventory[type] > 0) {
+        if(this.data.inventory[type] > 0) {
             this.data.inventory[type]--;
             this.save();
             return true;
@@ -56,45 +82,29 @@ const store = {
         return false;
     },
 
-    updateUI: function() {
-        // Safe check for elements before updating
-        const setText = (id, val) => {
-            const el = document.getElementById(id);
-            if(el) el.innerText = val;
-        };
-
-        setText('user-points', this.data.xp);
-        setText('current-level', this.data.level);
-        setText('profile-xp', this.data.xp);
-        setText('profile-matches', this.data.matches);
-        setText('shop-balance', this.data.xp);
-        setText('qty-5050', this.data.inventory['5050']);
-        setText('qty-skip', this.data.inventory['skip']);
-        
-        // Dynamic Rank Name
-        const rankEl = document.getElementById('profile-rank');
-        if(rankEl) {
-            if(this.data.level < 5) rankEl.innerText = "Script Kiddie";
-            else if(this.data.level < 10) rankEl.innerText = "White Hat";
-            else if(this.data.level < 20) rankEl.innerText = "Cyber Ninja";
-            else rankEl.innerText = "Elite Phantom";
+    resetData: function() {
+        if(confirm("WARNING: This will delete your identity and progress. Continue?")) {
+            localStorage.removeItem('try_data_v4');
+            location.reload();
         }
     }
 };
 
-// --- 2. SOUND & HAPTICS ENGINE ---
+// --- 2. SOUND & HAPTIC ENGINE (Code Generated) ---
 const sfx = {
     ctx: null,
     init: function() {
-        if (!this.ctx) this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+        if(!store.data.settings.sound) return;
+        if(!this.ctx) this.ctx = new (window.AudioContext || window.webkitAudioContext)();
     },
     playTone: function(freq, type, duration) {
-        if (!this.ctx) return;
+        if(!store.data.settings.sound || !this.ctx) { this.init(); return; }
+        if(!this.ctx) return;
         const osc = this.ctx.createOscillator();
         const gain = this.ctx.createGain();
         osc.type = type;
         osc.frequency.setValueAtTime(freq, this.ctx.currentTime);
-        gain.gain.setValueAtTime(0.05, this.ctx.currentTime); // Low volume
+        gain.gain.setValueAtTime(0.05, this.ctx.currentTime);
         gain.gain.exponentialRampToValueAtTime(0.0001, this.ctx.currentTime + duration);
         osc.connect(gain);
         gain.connect(this.ctx.destination);
@@ -102,11 +112,11 @@ const sfx = {
         osc.stop(this.ctx.currentTime + duration);
     },
     click: () => { sfx.playTone(800, 'square', 0.05); navigator.vibrate?.(10); },
-    correct: () => { sfx.playTone(600, 'sine', 0.1); setTimeout(() => sfx.playTone(1200, 'sine', 0.2), 100); navigator.vibrate?.([50, 50, 50]); },
+    correct: () => { sfx.playTone(600, 'sine', 0.1); setTimeout(() => sfx.playTone(1200, 'sine', 0.2), 100); navigator.vibrate?.([50, 50]); },
     wrong: () => { sfx.playTone(150, 'sawtooth', 0.3); navigator.vibrate?.(200); }
 };
 
-// --- 3. UI CONTROLLER (Toast & Modals) ---
+// --- 3. UI CONTROLLER ---
 const ui = {
     screens: {
         home: document.getElementById('home-screen'),
@@ -115,7 +125,7 @@ const ui = {
         result: document.getElementById('result-screen')
     },
 
-    showScreen(name) {
+    showScreen: function(name) {
         Object.values(this.screens).forEach(s => {
             s.classList.remove('active');
             s.classList.add('hidden');
@@ -124,51 +134,78 @@ const ui = {
         this.screens[name].classList.add('active');
     },
 
-    openModal(type) {
+    openModal: function(type) {
         sfx.click();
-        document.getElementById('modal-overlay').classList.remove('hidden');
-        document.querySelectorAll('.modal-box').forEach(b => b.classList.add('hidden'));
-        document.getElementById(`modal-${type}`).classList.remove('hidden');
+        const overlay = document.getElementById('modal-overlay');
+        overlay.classList.remove('hidden');
         
+        document.querySelectorAll('.modal-box').forEach(b => b.classList.add('hidden'));
+        
+        const modal = document.getElementById(`modal-${type}`);
+        modal.classList.remove('hidden');
+
+        // Prevent closing registration modal
+        if(type === 'register') {
+            overlay.onclick = null; // Disable background click close
+        } else {
+            // Background click closes other modals
+            overlay.onclick = (e) => {
+                if(e.target === overlay) ui.closeModal();
+            };
+        }
+
         if(type === 'leaderboard') app.generateLeaderboard();
+        ui.updateAll();
     },
 
-    closeModal() {
+    closeModal: function() {
         sfx.click();
         document.getElementById('modal-overlay').classList.add('hidden');
     },
 
-    showToast(msg) {
-        // Simple alert replacement for now, can be upgraded to custom toast
-        alert(`[SYSTEM]: ${msg}`);
-    },
-    
-    // UI Helpers
-    updateQuestion(q, current, total) {
-        document.getElementById('q-current').innerText = current;
-        document.getElementById('q-total').innerText = total;
-        document.getElementById('question-text').innerText = q.question;
-        const container = document.getElementById('options-container');
-        container.innerHTML = '';
-        
-        q.options.forEach(opt => {
-            const btn = document.createElement('button');
-            btn.className = 'option-btn';
-            btn.innerText = opt;
-            btn.onclick = () => app.handleAnswer(opt, btn);
-            container.appendChild(btn);
-        });
-    },
+    updateAll: function() {
+        // Safe Update
+        const safeSet = (id, val) => { const el = document.getElementById(id); if(el) el.innerText = val; };
 
-    showCombo(count) {
-        const el = document.getElementById('combo-display');
-        el.innerText = `COMBO x${count}!`;
-        el.classList.remove('hidden');
-        setTimeout(() => el.classList.add('hidden'), 1000);
+        // Header
+        safeSet('user-points', store.data.xp);
+        safeSet('current-level', store.data.level);
+        safeSet('player-name-display', store.data.name || "Agent");
+
+        // Profile Modal
+        safeSet('p-name', store.data.name || "Unknown");
+        safeSet('p-age', store.data.age || "--");
+        safeSet('p-xp', store.data.xp);
+        safeSet('p-matches', store.data.stats.matchesPlayed);
+        safeSet('p-total-q', store.data.stats.totalQuestions);
+        safeSet('p-correct', store.data.stats.correctAnswers);
+        safeSet('p-wrong', store.data.stats.wrongAnswers);
+
+        // Rank Calculation
+        const rankEl = document.getElementById('p-rank');
+        if(rankEl) {
+            const lvl = store.data.level;
+            if(lvl < 5) rankEl.innerText = "Script Kiddie";
+            else if(lvl < 10) rankEl.innerText = "White Hat";
+            else if(lvl < 20) rankEl.innerText = "Cyber Ninja";
+            else rankEl.innerText = "Elite Phantom";
+        }
+
+        // Shop & Game
+        safeSet('shop-balance', store.data.xp);
+        safeSet('qty-5050', store.data.inventory['5050']);
+        safeSet('qty-skip', store.data.inventory['skip']);
+        
+        // Settings
+        const sndBtn = document.getElementById('btn-sound');
+        if(sndBtn) {
+            sndBtn.innerText = store.data.settings.sound ? "ON" : "OFF";
+            sndBtn.className = store.data.settings.sound ? "toggle-btn on" : "toggle-btn";
+        }
     }
 };
 
-// --- 4. MAIN APPLICATION ---
+// --- 4. MAIN APPLICATION LOGIC ---
 const app = {
     currentQuestions: [],
     qIndex: 0,
@@ -179,18 +216,43 @@ const app = {
     gameActive: false,
 
     init: function() {
-        // Boot Sequence Logic
-        setTimeout(() => {
-            document.getElementById('boot-log').innerText = "ACCESS GRANTED...";
-        }, 1500);
+        // Boot Sequence
+        setTimeout(() => { document.getElementById('boot-log').innerText = "LOADING USER DATA..."; }, 1500);
+        
         setTimeout(() => {
             document.getElementById('boot-screen').style.display = 'none';
             document.getElementById('main-app').classList.remove('hidden');
             store.load();
+
+            // CHECK REGISTRATION
+            if(!store.data.name) {
+                ui.openModal('register');
+            } else {
+                ui.updateAll();
+            }
         }, 2500);
 
-        // Sound Init
         document.body.addEventListener('click', () => sfx.init(), { once: true });
+    },
+
+    registerUser: function() {
+        const name = document.getElementById('reg-name').value.trim();
+        const age = document.getElementById('reg-age').value.trim();
+
+        if(name.length > 2 && age > 0) {
+            sfx.correct();
+            store.register(name, age);
+            ui.closeModal();
+            alert(`Welcome, Agent ${name}. System unlocked.`);
+        } else {
+            sfx.wrong();
+            alert("Invalid Identity. Please enter valid Name and Age.");
+        }
+    },
+
+    toggleSound: function() {
+        store.data.settings.sound = !store.data.settings.sound;
+        store.save();
     },
 
     showCategorySelection: function() {
@@ -202,7 +264,7 @@ const app = {
         sfx.click();
         let qs = (cat === 'mixed') ? window.questionBank : window.questionBank.filter(q => q.category === cat);
         
-        if (qs.length < 1) { ui.showToast("No Data Available"); return; }
+        if (!qs || qs.length < 1) { alert("No Questions Found!"); return; }
         
         this.currentQuestions = qs.sort(() => Math.random() - 0.5).slice(0, 10);
         this.qIndex = 0;
@@ -219,7 +281,23 @@ const app = {
             this.endGame();
             return;
         }
-        ui.updateQuestion(this.currentQuestions[this.qIndex], this.qIndex + 1, this.currentQuestions.length);
+        const q = this.currentQuestions[this.qIndex];
+        
+        // Update UI
+        document.getElementById('q-current').innerText = this.qIndex + 1;
+        document.getElementById('q-total').innerText = this.currentQuestions.length;
+        document.getElementById('question-text').innerText = q.question;
+        
+        const container = document.getElementById('options-container');
+        container.innerHTML = '';
+        q.options.forEach(opt => {
+            const btn = document.createElement('button');
+            btn.className = 'option-btn';
+            btn.innerText = opt;
+            btn.onclick = () => app.handleAnswer(opt, btn);
+            container.appendChild(btn);
+        });
+
         this.startTimer();
     },
 
@@ -230,12 +308,18 @@ const app = {
         const correct = this.currentQuestions[this.qIndex].answer;
         const isCorrect = (selected === correct);
 
+        // Update Stats
+        store.updateStats(isCorrect);
+
         if (isCorrect) {
             this.combo++;
             let points = 10;
             if (this.combo > 1) {
-                points += 5; // Bonus for combo
-                ui.showCombo(this.combo);
+                points += 5;
+                const cEl = document.getElementById('combo-display');
+                cEl.innerText = `COMBO x${this.combo}!`;
+                cEl.classList.remove('hidden');
+                setTimeout(() => cEl.classList.add('hidden'), 1000);
             }
             this.score += points;
             btn.classList.add('correct');
@@ -244,7 +328,7 @@ const app = {
             this.combo = 0;
             btn.classList.add('wrong');
             sfx.wrong();
-            // Highlight correct one
+            // Highlight correct answer
             Array.from(document.querySelectorAll('.option-btn')).forEach(b => {
                 if(b.innerText === correct) b.classList.add('correct');
             });
@@ -259,41 +343,31 @@ const app = {
     startTimer: function() {
         clearInterval(this.timer);
         this.timeLeft = 100;
-        document.getElementById('timer-bar').style.width = '100%';
-        
+        const bar = document.getElementById('timer-bar');
+        bar.style.width = '100%';
+        bar.style.backgroundColor = 'var(--secondary-color)';
+
         this.timer = setInterval(() => {
             this.timeLeft -= 1;
-            const bar = document.getElementById('timer-bar');
             bar.style.width = this.timeLeft + '%';
+            if(this.timeLeft < 30) bar.style.backgroundColor = '#f00';
             
-            if (this.timeLeft < 30) bar.style.backgroundColor = '#f00';
-            else bar.style.backgroundColor = 'var(--secondary-color)';
-
             if (this.timeLeft <= 0) {
                 clearInterval(this.timer);
                 sfx.wrong();
+                store.updateStats(false); // Time out = wrong
                 this.combo = 0;
                 this.qIndex++;
-                this.loadQuestion(); // Auto skip on timeout
+                this.loadQuestion();
             }
-        }, 150); // Speed
-    },
-
-    endGame: function() {
-        this.gameActive = false;
-        clearInterval(this.timer);
-        store.addXP(this.score);
-        
-        document.getElementById('final-score').innerText = this.score;
-        // Simple counts logic omitted for brevity, you can add if needed
-        ui.showScreen('result');
-        if(this.score > 50) sfx.correct();
+        }, 150);
     },
 
     useLifeline: function(type) {
         sfx.click();
         const btn = document.getElementById(`life-${type}`);
-        if (store.useItem(type)) {
+        
+        if(store.useItem(type)) {
             btn.style.opacity = '0.5';
             btn.disabled = true;
             
@@ -313,52 +387,61 @@ const app = {
                 this.loadQuestion();
             }
         } else {
-            ui.showToast("Buy from Black Market!");
+            alert("No items left! Visit Market.");
         }
     },
-    
-    // --- 5. SOCIAL SHARE (NATIVE) ---
+
+    endGame: function() {
+        this.gameActive = false;
+        clearInterval(this.timer);
+        store.addXP(this.score);
+        store.finishMatch();
+        
+        document.getElementById('final-score').innerText = this.score;
+        document.getElementById('res-correct').innerText = store.data.stats.correctAnswers; // Showing Total Stats in result for now or session stats? 
+        // Let's show Session Stats in Result for better UX, but we tracked Total. 
+        // For simplicity, showing score is enough here.
+        
+        ui.showScreen('result');
+        if(this.score > 50) sfx.correct();
+    },
+
+    goHome: function() {
+        sfx.click();
+        clearInterval(this.timer);
+        ui.closeModal();
+        ui.showScreen('home');
+    },
+
     shareScore: function() {
-        const shareData = {
-            title: 'TRY - Cyber Quiz',
-            text: `⚠️ SECURITY ALERT ⚠️\nI just scored ${this.score} BITS in TRY System! Rank: ${store.data.level}.\nCan you hack my score?`,
-            url: window.location.href
-        };
-
+        const text = `⚠️ SYSTEM ALERT ⚠️\nAgent ${store.data.name} just scored ${this.score} BITS in TRY! \nRank: ${document.getElementById('p-rank').innerText}\nCan you beat me?`;
         if (navigator.share) {
-            navigator.share(shareData).then(() => console.log('Shared successfully'));
+            navigator.share({ title: 'TRY System', text: text, url: window.location.href });
         } else {
-            // Fallback for PC
-            navigator.clipboard.writeText(`${shareData.text} \nPlay: ${shareData.url}`);
-            ui.showToast("Score copied to clipboard!");
+            navigator.clipboard.writeText(text);
+            alert("Score copied to clipboard!");
         }
     },
 
-    // --- 6. FAKE LEADERBOARD GENERATOR ---
     generateLeaderboard: function() {
         const list = document.getElementById('leaderboard-list');
         list.innerHTML = '';
-        
-        // Mock Data
-        let ranks = [
-            { name: "VampireSquad", xp: 5000 },
-            { name: "Neon_Ghost", xp: 4200 },
-            { name: "Cyber_Wolf", xp: 3800 },
-            { name: "Zero_Cool", xp: 3100 },
-            { name: "You (Agent)", xp: store.data.xp } // Your Score
-        ];
-
-        // Sort by XP
-        ranks.sort((a, b) => b.xp - a.xp);
+        const ranks = [
+            { name: "VampireSquad", xp: 9999 },
+            { name: "Cyber_Wolf", xp: 5000 },
+            { name: "Zero_Cool", xp: 4200 },
+            { name: store.data.name || "You", xp: store.data.xp }
+        ].sort((a,b) => b.xp - a.xp);
 
         ranks.forEach((r, i) => {
             const div = document.createElement('div');
-            div.className = `rank-row ${r.name.includes('You') ? 'highlight' : ''}`;
+            div.style.cssText = "display:flex; justify-content:space-between; padding:8px; border-bottom:1px solid #333; font-size:0.9rem;";
+            if(r.name === store.data.name) div.style.color = "var(--primary-color)";
             div.innerHTML = `<span>#${i+1} ${r.name}</span> <span>${r.xp} XP</span>`;
             list.appendChild(div);
         });
     }
 };
 
-// START
+// INITIALIZE
 document.addEventListener('DOMContentLoaded', app.init);
