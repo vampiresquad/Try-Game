@@ -473,3 +473,198 @@ navigator.serviceWorker.register("service-worker.js");
 }
 
 });
+/* =================================================
+STEP 6 — ECONOMY + STORE + ACHIEVEMENT + LEADERBOARD
+================================================= */
+
+
+/* ================= STORE SYSTEM ================= */
+
+const STORE = {
+
+buy5050(){
+
+if(TRY.wallet.bits < 50) return;
+
+TRY.wallet.bits -= 50;
+TRY.wallet.lifeline5050++;
+
+DB.save();
+updateProfileUI();
+
+},
+
+buySkip(){
+
+if(TRY.wallet.bits < 40) return;
+
+TRY.wallet.bits -= 40;
+TRY.wallet.skip++;
+
+DB.save();
+updateProfileUI();
+
+}
+
+};
+
+
+/* ================= THEME SYSTEM ================= */
+
+const THEME = {
+
+set(color){
+
+document.documentElement.style.setProperty("--neon",color);
+
+localStorage.try_theme = color;
+
+},
+
+load(){
+
+if(localStorage.try_theme){
+this.set(localStorage.try_theme);
+}
+
+}
+
+};
+
+
+/* ================= ACHIEVEMENT SYSTEM ================= */
+
+const ACH = {
+
+check(){
+
+if(TRY.wallet.bits >= 1000){
+this.unlock("Bit Collector");
+}
+
+if(TRY.stats.correct >= 50){
+this.unlock("Sharp Mind");
+}
+
+},
+
+unlock(name){
+
+let a = JSON.parse(localStorage.try_ach || "[]");
+
+if(!a.includes(name)){
+a.push(name);
+localStorage.try_ach = JSON.stringify(a);
+AUDIO.levelup();
+}
+
+}
+
+};
+
+
+/* ================= LEADERBOARD ================= */
+
+const LEADERBOARD = {
+
+save(){
+
+let board = JSON.parse(localStorage.try_board || "[]");
+
+board.push({
+name:TRY.player.name,
+level:TRY.player.level,
+bits:TRY.wallet.bits
+});
+
+board.sort((a,b)=> b.level - a.level);
+
+board = board.slice(0,10);
+
+localStorage.try_board = JSON.stringify(board);
+
+},
+
+render(){
+
+let board = JSON.parse(localStorage.try_board || "[]");
+
+let html = "";
+
+board.forEach((p,i)=>{
+html += `<p>${i+1}. ${p.name} — Lv ${p.level}</p>`;
+});
+
+document.getElementById("leaderboardList").innerHTML =
+html || "No Data Yet";
+
+}
+
+};
+
+
+/* ================= SOCIAL SHARE ================= */
+
+const SOCIAL = {
+
+share(){
+
+let text =
+`I reached Level ${TRY.player.level} in TRY Game!\nCan you beat me?`;
+
+if(navigator.share){
+navigator.share({
+title:"TRY Quiz Game",
+text:text
+});
+}else{
+alert(text);
+}
+
+},
+
+preview(){
+
+document.getElementById("sharePreview").textContent =
+`Player: ${TRY.player.name}
+Level: ${TRY.player.level}
+BITS: ${TRY.wallet.bits}`;
+
+}
+
+};
+
+
+/* ================= STORE BUTTON LINK ================= */
+
+document.querySelectorAll(".store-item button")[0].onclick = ()=>{
+STORE.buy5050();
+};
+
+document.querySelectorAll(".store-item button")[1].onclick = ()=>{
+STORE.buySkip();
+};
+
+
+/* ================= SHARE BUTTON ================= */
+
+document.getElementById("shareBtn").onclick = ()=>{
+SOCIAL.share();
+};
+
+
+/* ================= GAME HOOK ================= */
+
+setInterval(()=>{
+ACH.check();
+},5000);
+
+
+/* ================= LOAD HOOK ================= */
+
+window.addEventListener("load",()=>{
+
+THEME.load();
+LEADERBOARD.render();
+
+});
