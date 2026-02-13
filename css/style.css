@@ -1,190 +1,304 @@
-/* ===== ROOT VARIABLES ===== */
-:root {
-    --bg: #0a0c0f;
-    --text: #b7ffd9;
-    --neon: #00ff9d;
-    --neon-pink: #ff00c1;
-    --neon-cyan: #00fff9;
-    --accent: #ffb86b;
-    --dark: #000;
-    --panel: #111;
-    --shadow-neon: 0 0 10px var(--neon), 0 0 20px var(--neon);
-    --transition: all 0.2s ease;
+/* ================= ROOT SYSTEM ================= */
+
+:root{
+--bg-main:#05070d;
+--bg-card:#0b0f1a;
+--neon:#00ffd5;
+--neon-soft:#00bfa5;
+--danger:#ff003c;
+--gold:#ffd700;
+--text-main:#d7fdf7;
+--border-glow:0 0 6px var(--neon),0 0 12px var(--neon-soft);
 }
 
-/* ===== RESET & BASE ===== */
-* {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
+*{
+margin:0;
+padding:0;
+box-sizing:border-box;
 }
 
-body {
-    font-family: 'Share Tech Mono', monospace;
-    background: var(--bg);
-    color: var(--text);
-    min-height: 100vh;
-    position: relative;
-    overflow-x: hidden;
+body{
+background:radial-gradient(circle at center,#02030a,#000000);
+font-family:'Share Tech Mono', monospace;
+color:var(--text-main);
+min-height:100vh;
+overflow-x:hidden;
 }
 
-/* CRT Scanline effect - z-index কমানো + performance অপটিমাইজ */
-body::before {
-    content: "";
-    position: fixed;
-    inset: 0;
-    background: linear-gradient(rgba(0,255,0,0.025) 50%, transparent 50%);
-    background-size: 100% 4px;
-    pointer-events: none;
-    z-index: 1;           /* খুব উঁচু z-index ছিল */
-    animation: scanline 12s linear infinite;
+/* ================= NEON TEXT ================= */
+
+.neon-text{
+font-family:'Orbitron', sans-serif;
+color:var(--neon);
+text-shadow:0 0 6px var(--neon),0 0 20px var(--neon-soft);
+letter-spacing:2px;
 }
 
-@keyframes scanline {
-    0% { background-position: 0 0; }
-    100% { background-position: 0 20px; }
+/* ================= BOOT SCREEN ================= */
+
+#bootScreen{
+position:fixed;
+inset:0;
+background:black;
+display:flex;
+justify-content:center;
+align-items:center;
+z-index:9999;
 }
 
-/* ===== BOOT SCREEN ===== */
-.boot-screen {
-    position: fixed;
-    inset: 0;
-    background: var(--dark);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 10000;
-    opacity: 1;
-    visibility: visible;
-    transition: opacity 0.6s ease 2.8s, visibility 0s linear 3.4s;
+.boot-terminal{
+width:90%;
+max-width:500px;
+background:#010205;
+padding:30px;
+border:1px solid var(--neon);
+box-shadow:var(--border-glow);
 }
 
-.boot-screen.fade-out {
-    opacity: 0;
-    visibility: hidden;
+.boot-log{
+margin-top:20px;
+font-size:13px;
+line-height:1.6;
+opacity:.85;
 }
 
-/* JS-এ fade-out ক্লাস যোগ করা ভালো, animation-delay-এর পরিবর্তে */
-
-/* ===== TYPOGRAPHY & NEON ===== */
-h1, h2, h3 {
-    font-family: 'Orbitron', sans-serif;
-    text-transform: uppercase;
-    letter-spacing: 2px;
+.boot-progress{
+width:100%;
+height:6px;
+background:#111;
+margin-top:15px;
 }
 
-.neon-text {
-    color: #fff;
-    text-shadow: 0 0 5px var(--neon), 0 0 10px var(--neon), 0 0 20px var(--neon);
+#bootBar{
+height:100%;
+width:0%;
+background:var(--neon);
+box-shadow:var(--border-glow);
+transition:.4s;
 }
 
-.glitch {
-    position: relative;
-    color: var(--neon);
-    font-size: 3rem;
-    animation: glitch 4s infinite steps(1); /* infinite থেকে কমিয়ে CPU save */
+/* ================= MAIN APP ================= */
+
+.hidden{
+display:none;
 }
 
-.glitch::before,
-.glitch::after {
-    content: attr(data-text);
-    position: absolute;
-    inset: 0;
-    width: 100%;
-    height: 100%;
+/* ================= TOP BAR ================= */
+
+.top-bar{
+display:flex;
+justify-content:space-between;
+align-items:center;
+padding:12px 15px;
+background:#02030a;
+border-bottom:1px solid rgba(0,255,200,.2);
 }
 
-.glitch::before {
-    color: var(--neon-pink);
-    animation: glitch-offset 2s infinite linear alternate-reverse;
+.top-stats span{
+margin-left:15px;
+font-size:14px;
 }
 
-.glitch::after {
-    color: var(--neon-cyan);
-    animation: glitch-offset2 3s infinite linear alternate-reverse;
+/* ================= SCREENS ================= */
+
+.screen{
+display:none;
+padding:20px;
+animation:fadeIn .4s ease;
 }
 
-/* ===== FOCUS & ACCESSIBILITY ===== */
-button:focus-visible,
-input:focus-visible,
-.category-card:focus-visible,
-.option-btn:focus-visible {
-    outline: 3px solid var(--neon);
-    outline-offset: 4px;
-    box-shadow: 0 0 15px var(--neon);
+.screen.active{
+display:block;
 }
 
-/* ===== BUTTONS ===== */
-button {
-    background: transparent;
-    border: 2px solid var(--neon);
-    color: var(--neon);
-    font-family: 'Share Tech Mono', monospace;
-    font-size: 1rem;
-    padding: 0.9rem 1.4rem;
-    cursor: pointer;
-    transition: var(--transition);
-    text-transform: uppercase;
-    box-shadow: 0 0 6px var(--neon);
-    min-height: 48px;        /* touch target */
-    min-width: 100px;
+@keyframes fadeIn{
+from{opacity:0; transform:translateY(10px);}
+to{opacity:1; transform:translateY(0);}
 }
 
-button:hover,
-button:focus {
-    background: var(--neon);
-    color: var(--dark);
-    box-shadow: 0 0 25px var(--neon);
+/* ================= BUTTONS ================= */
+
+.primary-btn{
+margin-top:25px;
+padding:12px 25px;
+background:transparent;
+border:1px solid var(--neon);
+color:var(--neon);
+font-family:'Orbitron';
+cursor:pointer;
+box-shadow:var(--border-glow);
+transition:.3s;
 }
 
-/* ... বাকি বাটন স্টাইল একই রাখা হয়েছে, শুধু var() ব্যবহার করা হয়েছে */
-
-/* ===== VIEWS & LAYOUT ===== */
-.view {
-    padding: 1.2rem;
-    max-width: 640px;
-    margin: 0 auto;
-    width: 100%;
+.primary-btn:hover{
+background:rgba(0,255,200,.1);
+transform:translateY(-2px);
 }
 
-.hidden {
-    display: none;
+/* ================= QUIZ ================= */
+
+.quiz-header{
+display:flex;
+justify-content:space-between;
+margin-bottom:15px;
+font-size:14px;
 }
 
-/* মোবাইলের জন্য গ্রিড অপটিমাইজ */
-@media (max-width: 480px) {
-    .menu-grid {
-        grid-template-columns: 1fr;
-    }
-    
-    .category-grid {
-        grid-template-columns: 1fr;
-    }
-    
-    button {
-        padding: 1rem 1.2rem;
-        font-size: 1.1rem;
-    }
+.question-box{
+background:var(--bg-card);
+padding:20px;
+border:1px solid rgba(0,255,200,.2);
+box-shadow:0 0 10px rgba(0,255,200,.15);
+margin-bottom:20px;
 }
 
-/* ===== FOOTER & LOW CONTRAST FIX ===== */
-.app-footer,
-.credit-fixed {
-    color: #777;           /* #555 → #777 better contrast */
-    font-size: 0.85rem;
+.answers-grid{
+display:grid;
+grid-template-columns:1fr 1fr;
+gap:15px;
 }
 
-/* ===== OPTION BUTTONS ===== */
-.option-btn {
-    min-height: 60px;      /* touch target বড় করা */
-    display: flex;
-    align-items: center;
-    padding: 1rem 1.2rem;
+.answer-btn{
+padding:15px;
+background:#02040a;
+border:1px solid rgba(0,255,200,.2);
+color:var(--text-main);
+cursor:pointer;
+transition:.25s;
 }
 
-/* ===== OTHER ===== */
-.modal-overlay {
-    z-index: 2000;         /* boot screen-এর নিচে থাকবে না */
+.answer-btn:hover{
+border-color:var(--neon);
+box-shadow:var(--border-glow);
 }
 
-/* ... বাকি অংশ আপনার কোডের মতোই রাখা হয়েছে, শুধু var() + ছোট অপটিমাইজেশন */
+/* ================= PROFILE ================= */
+
+.profile-card{
+background:var(--bg-card);
+padding:20px;
+border:1px solid rgba(0,255,200,.2);
+line-height:1.8;
+}
+
+.profile-card hr{
+border:none;
+border-top:1px solid rgba(0,255,200,.2);
+margin:12px 0;
+}
+
+/* ================= STORE ================= */
+
+.store-grid{
+display:grid;
+grid-template-columns:1fr;
+gap:15px;
+}
+
+.store-item{
+background:var(--bg-card);
+padding:20px;
+border:1px solid rgba(0,255,200,.2);
+text-align:center;
+}
+
+.store-item button{
+margin-top:10px;
+padding:8px 20px;
+background:transparent;
+border:1px solid var(--neon);
+color:var(--neon);
+cursor:pointer;
+}
+
+/* ================= MODAL ================= */
+
+.modal{
+position:fixed;
+inset:0;
+background:rgba(0,0,0,.85);
+display:none;
+justify-content:center;
+align-items:center;
+z-index:999;
+}
+
+.modal-content{
+background:#010308;
+padding:25px;
+border:1px solid var(--neon);
+box-shadow:var(--border-glow);
+width:90%;
+max-width:350px;
+text-align:center;
+}
+
+.modal input{
+width:100%;
+padding:12px;
+margin:10px 0;
+background:black;
+border:1px solid rgba(0,255,200,.2);
+color:var(--neon);
+}
+
+/* ================= FOOTER ================= */
+
+footer{
+text-align:center;
+font-size:12px;
+opacity:.6;
+padding:15px;
+}
+
+/* ================= NAV ================= */
+
+.bottom-nav{
+position:fixed;
+bottom:0;
+left:0;
+right:0;
+display:flex;
+background:#02030a;
+border-top:1px solid rgba(0,255,200,.2);
+}
+
+.bottom-nav button{
+flex:1;
+padding:12px;
+background:none;
+border:none;
+color:var(--neon-soft);
+font-family:'Orbitron';
+cursor:pointer;
+}
+
+.bottom-nav button:hover{
+color:var(--neon);
+}
+
+/* ================= SCANLINES ================= */
+
+.scanlines{
+pointer-events:none;
+position:fixed;
+inset:0;
+background:linear-gradient(
+transparent 95%,
+rgba(0,255,200,.05) 96%
+);
+background-size:100% 4px;
+z-index:10;
+opacity:.3;
+}
+
+/* ================= BREACH MODE ================= */
+
+body.breach{
+animation:breachFlash .5s infinite alternate;
+}
+
+@keyframes breachFlash{
+from{background:#150000;}
+to{background:#000;}
+}
