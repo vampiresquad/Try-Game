@@ -344,3 +344,109 @@ body::before {
 
 .green { color: #0f0; }
 .red { color: #f00; }
+/* --- BUTTON ROW --- */
+.btn-row {
+    display: flex;
+    gap: 10px;
+    width: 80%;
+}
+.btn-row .cyber-btn {
+    width: 100%; /* Equal width */
+    font-size: 0.9rem;
+    padding: 10px;
+}
+
+/* --- MODAL SYSTEM (NEW) --- */
+#modal-overlay {
+    position: fixed;
+    top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0, 0, 0, 0.85);
+    backdrop-filter: blur(5px);
+    z-index: 100;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+#modal-overlay.hidden { display: none; }
+
+.modal-box {
+    background: #050510;
+    border: 2px solid var(--primary-color);
+    box-shadow: 0 0 20px rgba(0, 243, 255, 0.3);
+    padding: 20px;
+    width: 90%;
+    max-width: 350px;
+    text-align: center;
+    position: relative;
+    animation: zoomIn 0.3s ease;
+}
+.modal-box.hidden { display: none; }
+
+.modal-box h3 {
+    color: var(--primary-color);
+    border-bottom: 1px solid #333;
+    padding-bottom: 10px;
+    margin-bottom: 15px;
+}
+
+/* --- SHOP STYLES --- */
+.shop-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin: 15px 0;
+}
+.shop-item {
+    border: 1px solid #444;
+    padding: 10px;
+    cursor: pointer;
+    transition: 0.2s;
+}
+.shop-item:hover {
+    border-color: var(--secondary-color);
+    background: rgba(188, 19, 254, 0.1);
+}
+.shop-item i { font-size: 1.5rem; margin-bottom: 5px; display: block; }
+.shop-item small { color: var(--primary-color); display: block; margin-top: 5px; }
+
+/* --- SETTINGS STYLES --- */
+.setting-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+    border-bottom: 1px dashed #333;
+    padding-bottom: 5px;
+}
+.toggle-btn {
+    background: #333; color: #fff;
+    border: none; padding: 5px 10px;
+    cursor: pointer;
+}
+.toggle-btn.on { background: var(--primary-color); color: #000; }
+
+.cyber-btn.small {
+    width: auto;
+    padding: 8px 20px;
+    font-size: 0.9rem;
+}
+.cyber-btn.danger {
+    border-color: #f00; color: #f00;
+}
+
+/* --- COUNT BADGES --- */
+.count-badge {
+    background: var(--secondary-color);
+    color: #fff;
+    border-radius: 50%;
+    padding: 2px 6px;
+    font-size: 0.7rem;
+    position: absolute;
+    top: -5px; right: -5px;
+}
+.life-btn { position: relative; } /* Needed for badge positioning */
+
+@keyframes zoomIn {
+    from { transform: scale(0.8); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
+}
