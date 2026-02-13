@@ -1,175 +1,46 @@
-/* ===== RESPONSIVE STYLES ===== */
+/* ================= MOBILE FIRST ================= */
 
-/* Extra small devices (phones, < 480px) */
-@media (max-width: 480px) {
-    h1.glitch {
-        font-size: 2.4rem;          /* 2.5rem-এর পরিবর্তে সামান্য ছোট, কিন্তু পড়া যায় */
-        letter-spacing: 1.5px;
-    }
+@media (max-width:480px){
 
-    .app-header {
-        padding: 0.8rem 0;
-    }
-
-    .user-status {
-        font-size: 0.95rem;
-    }
-
-    .menu-grid {
-        grid-template-columns: 1fr;
-        gap: 1.2rem;
-    }
-
-    .menu-item {
-        padding: 1.4rem 0.8rem;
-        font-size: 1.15rem;
-    }
-
-    .category-grid {
-        gap: 1.2rem;
-    }
-
-    .category-card {
-        padding: 1.8rem 1rem;
-        font-size: 1.15rem;
-    }
-
-    .quiz-question {
-        font-size: 1.15rem;
-        padding: 1.2rem;
-        line-height: 1.45;
-    }
-
-    .quiz-stats span {
-        font-size: 1rem;
-        margin-right: 0.8rem;
-    }
-
-    .option-btn {
-        padding: 1.1rem 1.2rem;
-        font-size: 1rem;
-        min-height: 60px;          /* touch target নিরাপদ */
-    }
-
-    .lifeline-bar {
-        flex-direction: column;
-        gap: 0.8rem;
-    }
-
-    .lifeline-btn {
-        padding: 0.9rem 1.2rem;
-        font-size: 0.95rem;
-        min-height: 52px;          /* খুব ছোট ছিল */
-    }
-
-    .profile-card {
-        padding: 1.2rem;
-        line-height: 1.8;
-    }
-
-    .profile-card .label {
-        width: auto;
-        display: block;
-        margin-bottom: 0.3rem;
-        font-size: 0.95rem;
-    }
-
-    .result-stats p {
-        font-size: 1rem;
-    }
-
-    .result-actions {
-        flex-direction: column;
-        gap: 1rem;
-    }
-
-    .shop-item {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 0.8rem;
-    }
-
-    .btn-buy {
-        width: 100%;
-        padding: 0.9rem;
-    }
+.neon-text{
+font-size:20px;
 }
 
-/* Small devices & tablets (480px - 768px) */
-@media (min-width: 481px) and (max-width: 768px) {
-    h1.glitch {
-        font-size: 3rem;
-    }
-
-    .menu-grid {
-        grid-template-columns: repeat(2, 1fr);
-    }
-
-    .quiz-options {
-        gap: 1.2rem;
-    }
-
-    .option-btn {
-        padding: 1.3rem 1.4rem;
-        font-size: 1.05rem;
-    }
+.primary-btn{
+width:100%;
 }
 
-/* Landscape mode adjustments (short height screens) */
-@media (max-height: 520px) and (orientation: landscape) {
-    .view {
-        padding: 0.8rem;
-    }
-
-    .menu-grid {
-        grid-template-columns: repeat(3, 1fr);
-        gap: 0.8rem;
-    }
-
-    .quiz-header {
-        flex-wrap: wrap;
-        gap: 0.5rem;
-    }
-
-    .quiz-options {
-        flex-direction: row;
-        flex-wrap: wrap;
-        gap: 0.8rem;
-    }
-
-    .option-btn {
-        flex: 1 1 48%;
-        min-height: 70px;
-        padding: 1rem;
-        font-size: 1rem;
-    }
-
-    .lifeline-bar {
-        flex-direction: row;
-        justify-content: center;
-        gap: 1rem;
-    }
-
-    .lifeline-btn {
-        flex: 1;
-        max-width: 140px;
-    }
-
-    .modal-container {
-        width: 85%;
-        max-width: 420px;
-        padding: 1.5rem;
-    }
+.answers-grid{
+grid-template-columns:1fr;
 }
 
-/* Very small height landscape (e.g. older phones in landscape) */
-@media (max-height: 420px) and (orientation: landscape) {
-    h1.glitch {
-        font-size: 2.2rem;
-    }
+.top-stats{
+font-size:12px;
+}
 
-    .quiz-question {
-        font-size: 1rem;
-        padding: 0.8rem;
-    }
+}
+
+/* ================= TABLET ================= */
+
+@media (min-width:600px){
+
+.screen{
+padding:30px;
+}
+
+.answers-grid{
+grid-template-columns:1fr 1fr;
+}
+
+}
+
+/* ================= DESKTOP SAFE ================= */
+
+@media (min-width:900px){
+
+.screen{
+max-width:700px;
+margin:auto;
+}
+
 }
