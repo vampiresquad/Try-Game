@@ -1,12 +1,11 @@
 {
-  "name": "TRY Neon Quiz Game",
-  "short_name": "TRY",
-  "start_url": "./index.html",
+  "name": "TRY - Ultimate System",
+  "short_name": "TRY System",
+  "start_url": "index.html",
   "display": "standalone",
-  "background_color": "#05070d",
-  "theme_color": "#00ffd5",
+  "background_color": "#000000",
+  "theme_color": "#00f3ff",
   "orientation": "portrait",
-  "description": "Professional Dark Neon Hacker Quiz Game",
   "icons": [
     {
       "src": "assets/icons/icon-192.png",
