@@ -668,3 +668,28 @@ THEME.load();
 LEADERBOARD.render();
 
 });
+/* ================= INSTALL PROMPT ================= */
+
+let deferredPrompt;
+
+window.addEventListener("beforeinstallprompt", e => {
+
+e.preventDefault();
+deferredPrompt = e;
+
+console.log("Install Ready");
+
+});
+
+
+function installApp(){
+
+if(!deferredPrompt) return;
+
+deferredPrompt.prompt();
+
+deferredPrompt.userChoice.then(()=>{
+deferredPrompt = null;
+});
+
+}
