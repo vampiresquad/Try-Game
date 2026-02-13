@@ -3,14 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>TRY - Cyber Quiz Challenge</title>
-    
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <title>TRY - System v2.0</title>
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;700;900&family=Share+Tech+Mono&display=swap" rel="stylesheet">
-    
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="css/responsive.css">
 </head>
@@ -19,30 +14,35 @@
     <div class="cyber-container">
         
         <header class="top-bar">
-            <div class="profile-info">
-                <div class="avatar"><i class="fas fa-user-astronaut"></i></div>
+            <div class="profile-info" onclick="ui.openModal('profile')">
+                <div class="avatar"><i class="fas fa-user-secret"></i></div>
                 <div class="stats">
-                    <span id="player-name">Agent 007</span>
+                    <span id="player-name">Agent</span>
                     <span class="level-badge">LVL <span id="current-level">1</span></span>
                 </div>
             </div>
-            <div class="currency">
-                <i class="fas fa-bolt neon-icon"></i> <span id="user-points">0</span> XP
+            <div class="currency" onclick="ui.openModal('shop')">
+                <i class="fas fa-microchip neon-icon"></i> <span id="user-points">0</span> <small>BITS</small>
             </div>
         </header>
 
         <section id="home-screen" class="screen active">
             <div class="logo-area">
                 <h1 class="glitch-text" data-text="TRY">TRY</h1>
-                <p class="subtitle">SYSTEM READY. INITIATE PROTOCOL.</p>
+                <p class="subtitle">SYSTEM OPTIMIZED. READY.</p>
             </div>
             <div class="menu-grid">
                 <button class="cyber-btn primary" onclick="app.showCategorySelection()">
-                    <span class="btn-text">START MISSION</span>
+                    <i class="fas fa-play"></i> START MISSION
                 </button>
-                <button class="cyber-btn secondary" onclick="app.showProfile()">
-                    <span class="btn-text">PROFILE DATA</span>
-                </button>
+                <div class="btn-row">
+                    <button class="cyber-btn secondary" onclick="ui.openModal('shop')">
+                        <i class="fas fa-shopping-cart"></i> BLACK MARKET
+                    </button>
+                    <button class="cyber-btn secondary" onclick="ui.openModal('settings')">
+                        <i class="fas fa-cog"></i> CONFIG
+                    </button>
+                </div>
             </div>
         </section>
 
@@ -62,27 +62,22 @@
                     <i class="fas fa-random"></i><span>MIXED MODE</span>
                 </div>
             </div>
-            <button class="back-btn" onclick="app.goHome()"><i class="fas fa-arrow-left"></i> BACK</button>
+            <button class="back-btn" onclick="app.goHome()">ABORT</button>
         </section>
 
         <section id="game-screen" class="screen hidden">
             <div class="game-hud">
-                <div class="progress-bar-container">
-                    <div class="progress-fill" id="timer-bar"></div>
-                </div>
+                <div class="progress-bar-container"><div class="progress-fill" id="timer-bar"></div></div>
                 <div class="lifelines">
-                    <button id="life-5050" class="life-btn" onclick="game.useLifeline('5050')">50:50</button>
-                    <button id="life-skip" class="life-btn" onclick="game.useLifeline('skip')">SKIP</button>
+                    <button id="life-5050" class="life-btn" onclick="app.useLifeline('5050')">50:50 <span class="count-badge" id="qty-5050">0</span></button>
+                    <button id="life-skip" class="life-btn" onclick="app.useLifeline('skip')">SKIP <span class="count-badge" id="qty-skip">0</span></button>
                 </div>
             </div>
-
             <div class="question-area">
                 <span class="q-badge">QUERY <span id="q-current">1</span>/<span id="q-total">10</span></span>
-                <h3 id="question-text">Loading Data stream...</h3>
+                <h3 id="question-text">Loading...</h3>
             </div>
-
-            <div class="options-area" id="options-container">
-                </div>
+            <div class="options-area" id="options-container"></div>
         </section>
 
         <section id="result-screen" class="screen hidden">
@@ -90,7 +85,7 @@
                 <h2 id="result-title">MISSION COMPLETE</h2>
                 <div class="score-circle">
                     <span id="final-score">0</span>
-                    <small>XP EARNED</small>
+                    <small>BITS EARNED</small>
                 </div>
                 <div class="stats-grid">
                     <div class="stat">Correct: <span id="res-correct" class="green">0</span></div>
@@ -100,11 +95,55 @@
             </div>
         </section>
 
+        <div id="modal-overlay" class="hidden">
+            
+            <div id="modal-profile" class="modal-box hidden">
+                <h3>AGENT PROFILE</h3>
+                <div class="modal-content">
+                    <p>Name: <span class="hacker-text">Muhammad Shourov</span></p>
+                    <p>Rank: <span id="profile-rank" class="hacker-text">Script Kiddie</span></p>
+                    <p>Total XP: <span id="profile-xp">0</span></p>
+                    <p>Matches Played: <span id="profile-matches">0</span></p>
+                </div>
+                <button class="cyber-btn small" onclick="ui.closeModal()">CLOSE</button>
+            </div>
+
+            <div id="modal-shop" class="modal-box hidden">
+                <h3>BLACK MARKET</h3>
+                <p class="balance">Balance: <span id="shop-balance">0</span> BITS</p>
+                <div class="shop-grid">
+                    <div class="shop-item" onclick="store.buyItem('5050', 50)">
+                        <i class="fas fa-cut"></i>
+                        <span>50:50 Tool</span>
+                        <small>50 BITS</small>
+                    </div>
+                    <div class="shop-item" onclick="store.buyItem('skip', 80)">
+                        <i class="fas fa-forward"></i>
+                        <span>Skip Data</span>
+                        <small>80 BITS</small>
+                    </div>
+                </div>
+                <button class="cyber-btn small" onclick="ui.closeModal()">EXIT MARKET</button>
+            </div>
+
+            <div id="modal-settings" class="modal-box hidden">
+                <h3>SYSTEM CONFIG</h3>
+                <div class="setting-row">
+                    <span>Sound Effects</span>
+                    <button class="toggle-btn on" id="btn-sound" onclick="app.toggleSound()">ON</button>
+                </div>
+                <div class="setting-row">
+                    <span>Reset Progress</span>
+                    <button class="cyber-btn danger small" onclick="store.resetData()">RESET</button>
+                </div>
+                <button class="cyber-btn small" onclick="ui.closeModal()">SAVE & EXIT</button>
+            </div>
+        </div>
+
     </div>
 
     <script src="js/questions.js"></script>
     <script src="js/ui.js"></script>
     <script src="js/app.js"></script>
-
 </body>
 </html>
