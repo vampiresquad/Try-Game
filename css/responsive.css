@@ -1,1 +1,15 @@
-
+@media only screen and (max-width: 600px) {
+    .cyber-container {
+        max-width: 100%;
+        height: 100vh;
+        border-radius: 0;
+    }
+    
+    .glitch-text {
+        font-size: 3rem;
+    }
+    
+    .cat-card i {
+        font-size: 1.5rem;
+    }
+}
