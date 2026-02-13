@@ -1,8 +1,6 @@
 /* =================================================
-TRY GAME — ULTRA CORE ENGINE
-Vanilla JS Professional Engine
+TRY GAME — FINAL PRODUCTION ENGINE (CLEAN BUILD)
 ================================================= */
-
 
 /* ================= GLOBAL SYSTEM ================= */
 
@@ -11,15 +9,16 @@ version: "1.0.0",
 audioCtx: null,
 player: null,
 stats: null,
-settings: null
+wallet: null,
+mining: null
 };
 
-
-/* ================= DATABASE SYSTEM ================= */
+/* ================= DATABASE ================= */
 
 const DB = {
 
 init(){
+
 if(!localStorage.player_profile){
 localStorage.player_profile = JSON.stringify({
 name:"",
@@ -72,16 +71,19 @@ localStorage.mining = JSON.stringify(TRY.mining);
 
 };
 
-
-/* ================= AUDIO SYSTEM (NO FILES) ================= */
+/* ================= AUDIO ================= */
 
 const AUDIO = {
 
 init(){
+if(!TRY.audioCtx){
 TRY.audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+}
 },
 
 beep(freq=500,time=0.1,type="sine"){
+if(!TRY.audioCtx) return;
+
 const osc = TRY.audioCtx.createOscillator();
 const gain = TRY.audioCtx.createGain();
 
@@ -92,6 +94,7 @@ osc.connect(gain);
 gain.connect(TRY.audioCtx.destination);
 
 osc.start();
+
 gain.gain.exponentialRampToValueAtTime(
 0.00001,
 TRY.audioCtx.currentTime + time
@@ -106,7 +109,6 @@ levelup(){ this.beep(1600,0.3,"triangle"); }
 
 };
 
-
 /* ================= HAPTIC ================= */
 
 const HAPTIC = {
@@ -115,8 +117,7 @@ success(){ navigator.vibrate?.([40,20,40]); },
 error(){ navigator.vibrate?.([80,40,80]); }
 };
 
-
-/* ================= PLAYER SYSTEM ================= */
+/* ================= PLAYER ================= */
 
 const PLAYER = {
 
@@ -127,6 +128,7 @@ DB.save();
 },
 
 addXP(amount){
+
 TRY.player.xp += amount;
 
 if(TRY.player.xp >= 100){
@@ -140,6 +142,7 @@ DB.save();
 },
 
 updateRank(){
+
 const lvl = TRY.player.level;
 
 if(lvl >= 20) TRY.player.rank = "Elite Phantom";
@@ -147,6 +150,7 @@ else if(lvl >= 15) TRY.player.rank = "Shadow Hacker";
 else if(lvl >= 10) TRY.player.rank = "Ghost Operator";
 else if(lvl >= 5) TRY.player.rank = "Code Runner";
 else TRY.player.rank = "Script Kiddie";
+
 },
 
 addBits(amount){
@@ -156,7 +160,6 @@ DB.save();
 }
 
 };
-
 
 /* ================= PROFILE UI ================= */
 
@@ -181,44 +184,28 @@ document.getElementById("levelCount").textContent = TRY.player.level;
 
 }
 
-
-/* ================= MINING SYSTEM ================= */
+/* ================= MINING ================= */
 
 const MINING = {
 
 run(){
+
 let now = Date.now();
 let diff = now - TRY.mining.lastMine;
 
-let earned = Math.floor(diff / 60000); // per minute
+let earned = Math.floor(diff / 60000);
 
 if(earned > 0){
 PLAYER.addBits(earned);
 TRY.mining.lastMine = now;
 DB.save();
 }
+
 }
 
 };
 
-
-/* ================= NAVIGATION ================= */
-
-const NAV = {
-
-init(){
-document.querySelectorAll("button").forEach(btn=>{
-btn.addEventListener("click", ()=>{
-AUDIO.click();
-HAPTIC.tap();
-});
-});
-}
-
-};
-
-
-/* ================= REGISTER SYSTEM ================= */
+/* ================= REGISTER ================= */
 
 function initRegister(){
 
@@ -232,6 +219,8 @@ return;
 
 document.getElementById("registerBtn").onclick = ()=>{
 
+AUDIO.init();
+
 let name = document.getElementById("playerNameInput").value.trim();
 let age = document.getElementById("playerAgeInput").value;
 
@@ -244,6 +233,7 @@ return;
 PLAYER.register(name,age);
 modal.style.display="none";
 updateProfileUI();
+
 AUDIO.correct();
 HAPTIC.success();
 
@@ -251,8 +241,7 @@ HAPTIC.success();
 
 }
 
-
-/* ================= ADVANCED QUIZ ENGINE ================= */
+/* ================= QUIZ ================= */
 
 const QUIZ = {
 
@@ -269,15 +258,12 @@ this.loadQuestion();
 
 },
 
-/* ================= LOAD QUESTION ================= */
-
 loadQuestion(){
 
-if(!window.getSmartQuestion) return;
+let q = window.getSmartQuestion ?
+getSmartQuestion() :
+window.QUESTIONS[Math.floor(Math.random()*QUESTIONS.length)];
 
-let q = getSmartQuestion();
-
-/* Difficulty Scaling By Level */
 if(TRY.player.level >= 15 && q.difficulty === "easy"){
 q = getSmartQuestion();
 }
@@ -290,7 +276,6 @@ document.getElementById("questionCategory").textContent = q.category;
 this.renderAnswers(q);
 this.startTimer();
 
-/* Boss Breach Mode */
 if(TRY.player.level % 5 === 0){
 this.activateBossMode();
 }else{
@@ -299,26 +284,17 @@ this.deactivateBossMode();
 
 },
 
-/* ================= ANSWERS ================= */
-
 renderAnswers(q){
 
 const btns = document.querySelectorAll(".answer-btn");
 
 btns.forEach((b,i)=>{
-
 b.style.display="block";
 b.textContent = q.answers[i];
-
-b.onclick = ()=>{
-this.answer(q.answers[i] === q.correct);
-};
-
+b.onclick = ()=> this.answer(q.answers[i] === q.correct);
 });
 
 },
-
-/* ================= TIMER ================= */
 
 startTimer(){
 
@@ -341,8 +317,6 @@ this.answer(false);
 
 },
 
-/* ================= ANSWER RESULT ================= */
-
 answer(isCorrect){
 
 clearInterval(this.timer);
@@ -352,7 +326,6 @@ TRY.stats.totalQuestions++;
 if(isCorrect){
 
 TRY.stats.correct++;
-
 PLAYER.addXP(this.bossMode ? 40 : 20);
 PLAYER.addBits(this.bossMode ? 15 : 5);
 
@@ -367,16 +340,16 @@ HAPTIC.error();
 
 }
 
+if(TRY.stats.totalQuestions % 5 === 0){
+LEADERBOARD.save();
+}
+
 DB.save();
 updateProfileUI();
 
-setTimeout(()=>{
-this.loadQuestion();
-},600);
+setTimeout(()=> this.loadQuestion(), 600);
 
 },
-
-/* ================= LIFELINE 50:50 ================= */
 
 use5050(){
 
@@ -390,15 +363,15 @@ let wrong = btns.filter(b => b.textContent !== this.currentQuestion.correct);
 
 wrong.sort(()=>Math.random()-0.5);
 
+if(wrong.length >= 2){
 wrong[0].style.display="none";
 wrong[1].style.display="none";
+}
 
 DB.save();
 updateProfileUI();
 
 },
-
-/* ================= LIFELINE SKIP ================= */
 
 useSkip(){
 
@@ -411,8 +384,6 @@ updateProfileUI();
 this.loadQuestion();
 
 },
-
-/* ================= BOSS MODE ================= */
 
 activateBossMode(){
 
@@ -431,30 +402,6 @@ document.body.classList.remove("breach");
 
 };
 
-
-/* ================= BUTTON LINK ================= */
-
-document.getElementById("lifeline5050").onclick = ()=>{
-QUIZ.use5050();
-};
-
-document.getElementById("lifelineSkip").onclick = ()=>{
-QUIZ.useSkip();
-};
-
-document.getElementById("startGameBtn").onclick = ()=>{
-QUIZ.start();
-};
-
-/* ================= START GAME ================= */
-
-document.getElementById("startGameBtn").onclick = ()=>{
-TRY.stats.gamesPlayed++;
-DB.save();
-QUIZ.loadQuestion();
-};
-
-
 /* ================= INIT ================= */
 
 window.addEventListener("load",()=>{
@@ -463,233 +410,45 @@ DB.init();
 DB.load();
 
 AUDIO.init();
-NAV.init();
-MINING.run();
+
 initRegister();
 updateProfileUI();
 
+setInterval(()=> MINING.run(),60000);
+setInterval(()=> ACH?.check?.(),5000);
+
+THEME?.load?.();
+LEADERBOARD?.render?.();
+
 if("serviceWorker" in navigator){
-navigator.serviceWorker.register("service-worker.js");
+navigator.serviceWorker.register("service-worker.js").catch(()=>{});
 }
+
+/* Buttons Safe Bind */
+
+document.getElementById("startGameBtn")?.addEventListener("click", ()=> QUIZ.start());
+document.getElementById("lifeline5050")?.addEventListener("click", ()=> QUIZ.use5050());
+document.getElementById("lifelineSkip")?.addEventListener("click", ()=> QUIZ.useSkip());
+
+const storeBtns = document.querySelectorAll(".store-item button");
+storeBtns[0]?.addEventListener("click", STORE.buy5050);
+storeBtns[1]?.addEventListener("click", STORE.buySkip);
+
+document.getElementById("shareBtn")?.addEventListener("click", SOCIAL.share);
 
 });
-/* =================================================
-STEP 6 — ECONOMY + STORE + ACHIEVEMENT + LEADERBOARD
-================================================= */
 
-
-/* ================= STORE SYSTEM ================= */
-
-const STORE = {
-
-buy5050(){
-
-if(TRY.wallet.bits < 50) return;
-
-TRY.wallet.bits -= 50;
-TRY.wallet.lifeline5050++;
-
-DB.save();
-updateProfileUI();
-
-},
-
-buySkip(){
-
-if(TRY.wallet.bits < 40) return;
-
-TRY.wallet.bits -= 40;
-TRY.wallet.skip++;
-
-DB.save();
-updateProfileUI();
-
-}
-
-};
-
-
-/* ================= THEME SYSTEM ================= */
-
-const THEME = {
-
-set(color){
-
-document.documentElement.style.setProperty("--neon",color);
-
-localStorage.try_theme = color;
-
-},
-
-load(){
-
-if(localStorage.try_theme){
-this.set(localStorage.try_theme);
-}
-
-}
-
-};
-
-
-/* ================= ACHIEVEMENT SYSTEM ================= */
-
-const ACH = {
-
-check(){
-
-if(TRY.wallet.bits >= 1000){
-this.unlock("Bit Collector");
-}
-
-if(TRY.stats.correct >= 50){
-this.unlock("Sharp Mind");
-}
-
-},
-
-unlock(name){
-
-let a = JSON.parse(localStorage.try_ach || "[]");
-
-if(!a.includes(name)){
-a.push(name);
-localStorage.try_ach = JSON.stringify(a);
-AUDIO.levelup();
-}
-
-}
-
-};
-
-
-/* ================= LEADERBOARD ================= */
-
-const LEADERBOARD = {
-
-save(){
-
-let board = JSON.parse(localStorage.try_board || "[]");
-
-board.push({
-name:TRY.player.name,
-level:TRY.player.level,
-bits:TRY.wallet.bits
-});
-
-board.sort((a,b)=> b.level - a.level);
-
-board = board.slice(0,10);
-
-localStorage.try_board = JSON.stringify(board);
-
-},
-
-render(){
-
-let board = JSON.parse(localStorage.try_board || "[]");
-
-let html = "";
-
-board.forEach((p,i)=>{
-html += `<p>${i+1}. ${p.name} — Lv ${p.level}</p>`;
-});
-
-document.getElementById("leaderboardList").innerHTML =
-html || "No Data Yet";
-
-}
-
-};
-
-
-/* ================= SOCIAL SHARE ================= */
-
-const SOCIAL = {
-
-share(){
-
-let text =
-`I reached Level ${TRY.player.level} in TRY Game!\nCan you beat me?`;
-
-if(navigator.share){
-navigator.share({
-title:"TRY Quiz Game",
-text:text
-});
-}else{
-alert(text);
-}
-
-},
-
-preview(){
-
-document.getElementById("sharePreview").textContent =
-`Player: ${TRY.player.name}
-Level: ${TRY.player.level}
-BITS: ${TRY.wallet.bits}`;
-
-}
-
-};
-
-
-/* ================= STORE BUTTON LINK ================= */
-
-document.querySelectorAll(".store-item button")[0].onclick = ()=>{
-STORE.buy5050();
-};
-
-document.querySelectorAll(".store-item button")[1].onclick = ()=>{
-STORE.buySkip();
-};
-
-
-/* ================= SHARE BUTTON ================= */
-
-document.getElementById("shareBtn").onclick = ()=>{
-SOCIAL.share();
-};
-
-
-/* ================= GAME HOOK ================= */
-
-setInterval(()=>{
-ACH.check();
-},5000);
-
-
-/* ================= LOAD HOOK ================= */
-
-window.addEventListener("load",()=>{
-
-THEME.load();
-LEADERBOARD.render();
-
-});
 /* ================= INSTALL PROMPT ================= */
 
 let deferredPrompt;
 
 window.addEventListener("beforeinstallprompt", e => {
-
 e.preventDefault();
 deferredPrompt = e;
-
-console.log("Install Ready");
-
 });
-
 
 function installApp(){
-
 if(!deferredPrompt) return;
-
 deferredPrompt.prompt();
-
-deferredPrompt.userChoice.then(()=>{
-deferredPrompt = null;
-});
-
+deferredPrompt.userChoice.then(()=> deferredPrompt = null);
 }
