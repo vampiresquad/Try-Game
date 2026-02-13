@@ -1,46 +1,15 @@
-/* ================= MOBILE FIRST ================= */
-
-@media (max-width:480px){
-
-.neon-text{
-font-size:20px;
-}
-
-.primary-btn{
-width:100%;
-}
-
-.answers-grid{
-grid-template-columns:1fr;
-}
-
-.top-stats{
-font-size:12px;
-}
-
-}
-
-/* ================= TABLET ================= */
-
-@media (min-width:600px){
-
-.screen{
-padding:30px;
-}
-
-.answers-grid{
-grid-template-columns:1fr 1fr;
-}
-
-}
-
-/* ================= DESKTOP SAFE ================= */
-
-@media (min-width:900px){
-
-.screen{
-max-width:700px;
-margin:auto;
-}
-
+@media only screen and (max-width: 600px) {
+    .cyber-container {
+        max-width: 100%;
+        height: 100vh;
+        border-radius: 0;
+    }
+    
+    .glitch-text {
+        font-size: 3rem;
+    }
+    
+    .cat-card i {
+        font-size: 1.5rem;
+    }
 }
