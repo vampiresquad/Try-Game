@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>TRY - Ultimate System</title>
+    <title>TRY - Ultimate Quiz System</title>
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;700;900&family=Share+Tech+Mono&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="css/style.css">
@@ -15,7 +15,7 @@
         <div class="terminal-loader">
             <div class="text">SYSTEM_BOOT_SEQUENCE...</div>
             <div class="progress-line"></div>
-            <div class="log" id="boot-log">INITIALIZING KERNEL...</div>
+            <div class="log" id="boot-log">INITIALIZING CORE KERNEL...</div>
         </div>
     </div>
 
@@ -25,7 +25,7 @@
             <div class="profile-info" onclick="ui.openModal('profile')">
                 <div class="avatar"><i class="fas fa-user-secret"></i></div>
                 <div class="stats">
-                    <span id="player-name">Agent</span>
+                    <span id="player-name-display">Unknown</span>
                     <span class="level-badge">LVL <span id="current-level">1</span></span>
                 </div>
             </div>
@@ -51,6 +51,9 @@
                         <i class="fas fa-shopping-cart"></i> MARKET
                     </button>
                 </div>
+                <button class="cyber-btn danger-outline" onclick="ui.openModal('settings')">
+                    <i class="fas fa-cog"></i> SYSTEM CONFIG
+                </button>
             </div>
         </section>
 
@@ -62,7 +65,7 @@
                 <div class="cat-card" onclick="app.startGame('islamic')"><i class="fas fa-moon"></i><span>ISLAMIC</span></div>
                 <div class="cat-card" onclick="app.startGame('mixed')"><i class="fas fa-random"></i><span>MIXED MODE</span></div>
             </div>
-            <button class="back-btn" onclick="app.goHome()">ABORT</button>
+            <button class="back-btn" onclick="app.goHome()">ABORT MISSION</button>
         </section>
 
         <section id="game-screen" class="screen hidden">
@@ -76,7 +79,7 @@
             </div>
             <div class="question-area">
                 <span class="q-badge">QUERY <span id="q-current">1</span>/<span id="q-total">10</span></span>
-                <h3 id="question-text">Loading...</h3>
+                <h3 id="question-text">Loading Data Stream...</h3>
             </div>
             <div class="options-area" id="options-container"></div>
         </section>
@@ -92,7 +95,6 @@
                     <div class="stat">Correct: <span id="res-correct" class="green">0</span></div>
                     <div class="stat">Wrong: <span id="res-wrong" class="red">0</span></div>
                 </div>
-                
                 <button class="cyber-btn secondary" onclick="app.shareScore()">
                     <i class="fas fa-share-alt"></i> CHALLENGE FRIENDS
                 </button>
@@ -101,40 +103,71 @@
             </div>
         </section>
 
+        <footer class="game-footer">
+            Developed by <span class="author-name">Muhammad Shourov</span>
+        </footer>
+
         <div id="modal-overlay" class="hidden">
-            <div id="modal-shop" class="modal-box hidden">
-                <h3>BLACK MARKET</h3>
-                <p class="balance">Balance: <span id="shop-balance">0</span> BITS</p>
-                <div class="shop-grid">
-                    <div class="shop-item" onclick="store.buyItem('5050', 50)"><i class="fas fa-cut"></i><span>50:50 Tool</span><small>50 BITS</small></div>
-                    <div class="shop-item" onclick="store.buyItem('skip', 80)"><i class="fas fa-forward"></i><span>Skip Data</span><small>80 BITS</small></div>
-                </div>
-                <button class="cyber-btn small" onclick="ui.closeModal()">EXIT</button>
+            
+            <div id="modal-register" class="modal-box hidden" data-persistent="true">
+                <h3>IDENTITY VERIFICATION</h3>
+                <p style="font-size: 0.8rem; color: #888; margin-bottom: 15px;">Enter your details to access the system.</p>
+                <input type="text" id="reg-name" class="cyber-input" placeholder="Enter Codename / Name" maxlength="15">
+                <input type="number" id="reg-age" class="cyber-input" placeholder="Enter Age" max="99">
+                <button class="cyber-btn primary" onclick="app.registerUser()">GRANT ACCESS</button>
             </div>
 
             <div id="modal-profile" class="modal-box hidden">
                 <h3>AGENT DOSSIER</h3>
-                <div class="modal-content">
-                    <p>Name: <span class="hacker-text">Muhammad Shourov</span></p>
-                    <p>Rank: <span id="profile-rank" class="hacker-text">Script Kiddie</span></p>
-                    <p>Total XP: <span id="profile-xp">0</span></p>
-                    <p>Matches: <span id="profile-matches">0</span></p>
+                <div class="modal-content profile-stats">
+                    <div class="p-row"><span>Name:</span> <span id="p-name" class="hacker-text">--</span></div>
+                    <div class="p-row"><span>Age:</span> <span id="p-age">--</span></div>
+                    <div class="p-row"><span>Rank:</span> <span id="p-rank" class="hacker-text">--</span></div>
+                    <hr class="neon-line">
+                    <div class="p-row"><span>Matches Played:</span> <span id="p-matches">0</span></div>
+                    <div class="p-row"><span>Total Questions:</span> <span id="p-total-q">0</span></div>
+                    <div class="p-row"><span class="green">Correct:</span> <span id="p-correct">0</span></div>
+                    <div class="p-row"><span class="red">Wrong:</span> <span id="p-wrong">0</span></div>
                 </div>
                 <button class="cyber-btn small" onclick="ui.closeModal()">CLOSE</button>
             </div>
 
+            <div id="modal-shop" class="modal-box hidden">
+                <h3>BLACK MARKET</h3>
+                <p class="balance">Balance: <span id="shop-balance">0</span> BITS</p>
+                <div class="shop-grid">
+                    <div class="shop-item" onclick="store.buyItem('5050', 50)">
+                        <i class="fas fa-cut"></i><span>50:50 Tool</span><small>50 BITS</small>
+                    </div>
+                    <div class="shop-item" onclick="store.buyItem('skip', 80)">
+                        <i class="fas fa-forward"></i><span>Skip Data</span><small>80 BITS</small>
+                    </div>
+                </div>
+                <button class="cyber-btn small" onclick="ui.closeModal()">EXIT</button>
+            </div>
+
             <div id="modal-leaderboard" class="modal-box hidden">
                 <h3>GLOBAL RANKING</h3>
-                <div class="leaderboard-list" id="leaderboard-list">
-                    </div>
+                <div class="leaderboard-list" id="leaderboard-list"></div>
                 <button class="cyber-btn small" onclick="ui.closeModal()">CLOSE</button>
             </div>
-        </div>
 
+            <div id="modal-settings" class="modal-box hidden">
+                <h3>SYSTEM CONFIG</h3>
+                <div class="setting-row">
+                    <span>Sound Effects</span>
+                    <button class="toggle-btn on" id="btn-sound" onclick="app.toggleSound()">ON</button>
+                </div>
+                <div class="setting-row">
+                    <span>Factory Reset</span>
+                    <button class="cyber-btn danger small" onclick="store.resetData()">RESET</button>
+                </div>
+                <button class="cyber-btn small" onclick="ui.closeModal()">SAVE & EXIT</button>
+            </div>
+
+        </div>
     </div>
 
     <script src="js/questions.js"></script>
-    <script src="js/ui.js"></script>
-    <script src="js/app.js"></script>
-</body>
+    <script src="js/app.js"></script> </body>
 </html>
