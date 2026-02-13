@@ -1,1 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>TRY - Cyber Quiz Challenge</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;700;900&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/responsive.css">
+</head>
+<body>
+
+    <div class="cyber-container">
+        
+        <header class="top-bar">
+            <div class="profile-info">
+                <div class="avatar"><i class="fas fa-user-astronaut"></i></div>
+                <div class="stats">
+                    <span id="player-name">Guest Agent</span>
+                    <span class="level-badge">LVL <span id="current-level">1</span></span>
+                </div>
+            </div>
+            <div class="currency">
+                <i class="fas fa-bolt neon-icon"></i> <span id="user-points">0</span> XP
+            </div>
+        </header>
+
+        <section id="home-screen" class="screen active">
+            <div class="logo-area">
+                <h1 class="glitch-text" data-text="TRY">TRY</h1>
+                <p class="subtitle">SYSTEM READY. INITIATE PROTOCOL.</p>
+            </div>
+            
+            <div class="menu-grid">
+                <button class="cyber-btn primary" onclick="app.showCategorySelection()">
+                    <span class="btn-text">START MISSION</span>
+                    <span class="btn-glitch"></span>
+                </button>
+                <button class="cyber-btn secondary" onclick="app.showProfile()">
+                    <span class="btn-text">PROFILE DATA</span>
+                </button>
+                <button class="cyber-btn secondary" onclick="app.showSettings()">
+                    <span class="btn-text">SYSTEM CONFIG</span>
+                </button>
+            </div>
+        </section>
+
+        <section id="category-screen" class="screen hidden">
+            <h2 class="screen-title">SELECT TARGET</h2>
+            <div class="category-list" id="category-container">
+                <div class="cat-card" onclick="app.startGame('cyber_security')">
+                    <i class="fas fa-shield-alt"></i>
+                    <span>CYBER SECURITY</span>
+                </div>
+                <div class="cat-card" onclick="app.startGame('general')">
+                    <i class="fas fa-brain"></i>
+                    <span>GENERAL KNOWLEDGE</span>
+                </div>
+                <div class="cat-card" onclick="app.startGame('islamic')">
+                    <i class="fas fa-moon"></i>
+                    <span>ISLAMIC</span>
+                </div>
+                <div class="cat-card" onclick="app.startGame('mixed')">
+                    <i class="fas fa-random"></i>
+                    <span>MIXED MODE</span>
+                </div>
+            </div>
+            <button class="back-btn" onclick="app.goHome()"><i class="fas fa-arrow-left"></i> BACK</button>
+        </section>
+
+        <section id="game-screen" class="screen hidden">
+            <div class="game-hud">
+                <div class="progress-bar-container">
+                    <div class="progress-fill" id="timer-bar"></div>
+                </div>
+                <div class="lifelines">
+                    <button id="life-5050" class="life-btn" onclick="game.useLifeline('5050')">50:50</button>
+                    <button id="life-skip" class="life-btn" onclick="game.useLifeline('skip')">SKIP</button>
+                    <button id="life-time" class="life-btn" onclick="game.useLifeline('time')">+TIME</button>
+                </div>
+            </div>
+
+            <div class="question-area">
+                <span class="q-badge">QUERY <span id="q-current">1</span>/<span id="q-total">10</span></span>
+                <h3 id="question-text" class="typewriter">Loading Data stream...</h3>
+            </div>
+
+            <div class="options-area" id="options-container">
+                </div>
+        </section>
+
+        <section id="result-screen" class="screen hidden">
+            <div class="result-box">
+                <h2 id="result-title">MISSION COMPLETE</h2>
+                <div class="score-circle">
+                    <span id="final-score">0</span>
+                    <small>XP EARNED</small>
+                </div>
+                <div class="stats-grid">
+                    <div class="stat">Correct: <span id="res-correct" class="green">0</span></div>
+                    <div class="stat">Wrong: <span id="res-wrong" class="red">0</span></div>
+                </div>
+                <button class="cyber-btn primary" onclick="app.goHome()">RETURN TO BASE</button>
+            </div>
+        </section>
+
+    </div>
+
+    <audio id="bg-music" loop>
+        <source src="assets/sounds/cyber-bg.mp3" type="audio/mpeg">
+    </audio>
+    <audio id="click-sound">
+        <source src="assets/sounds/click.mp3" type="audio/mpeg">
+    </audio>
+    <audio id="correct-sound">
+        <source src="assets/sounds/correct.mp3" type="audio/mpeg">
+    </audio>
+    <audio id="wrong-sound">
+        <source src="assets/sounds/wrong.mp3" type="audio/mpeg">
+    </audio>
+
+    <script src="js/questions.js"></script>
+    <script src="js/ui.js"></script>
+    <script src="js/app.js"></script>
+
+</body>
+</html>
