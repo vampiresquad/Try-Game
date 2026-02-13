@@ -450,3 +450,73 @@ body::before {
     from { transform: scale(0.8); opacity: 0; }
     to { transform: scale(1); opacity: 1; }
 }
+/* --- BOOT SCREEN --- */
+#boot-screen {
+    position: fixed;
+    top: 0; left: 0; width: 100%; height: 100%;
+    background: #000;
+    z-index: 999;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: var(--primary-color);
+    font-family: var(--font-body);
+}
+
+.terminal-loader {
+    width: 80%;
+    text-align: left;
+}
+
+.progress-line {
+    height: 4px;
+    background: #333;
+    margin: 10px 0;
+    position: relative;
+}
+.progress-line::after {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; height: 100%; width: 0%;
+    background: var(--primary-color);
+    animation: loadProgress 2.5s ease-in-out forwards;
+    box-shadow: 0 0 10px var(--primary-color);
+}
+@keyframes loadProgress { 0% { width: 0; } 100% { width: 100%; } }
+
+.log { font-size: 0.8rem; color: #666; animation: blink 0.2s infinite; }
+
+/* --- LEADERBOARD --- */
+.leaderboard-list {
+    text-align: left;
+    margin: 10px 0;
+    max-height: 200px;
+    overflow-y: auto;
+}
+.rank-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px;
+    border-bottom: 1px solid #333;
+    font-size: 0.9rem;
+}
+.rank-row.highlight {
+    color: var(--primary-color);
+    border: 1px solid var(--primary-color);
+    background: rgba(0, 243, 255, 0.1);
+}
+
+/* --- COMBO TEXT --- */
+.combo-text {
+    text-align: center;
+    color: #ff00de; /* Neon Pink */
+    font-weight: bold;
+    font-family: var(--font-head);
+    animation: popIn 0.3s ease;
+    margin-bottom: 5px;
+}
+@keyframes popIn {
+    0% { transform: scale(0); }
+    80% { transform: scale(1.2); }
+    100% { transform: scale(1); }
+}
