@@ -1,454 +1,339 @@
-/* =================================================
-TRY GAME — FINAL PRODUCTION ENGINE (CLEAN BUILD)
-================================================= */
+/* TRY - ULTIMATE QUIZ SYSTEM ENGINE v5.0
+   Developed by Muhammad Shourov
+   Features: PWA, Mining, Themes, Breach Mode, Achievements
+*/
 
-/* ================= GLOBAL SYSTEM ================= */
+// --- 1. DATA STORE ---
+const store = {
+    data: {
+        name: null, age: null, xp: 0, level: 1,
+        inventory: { '5050': 2, 'skip': 2 },
+        mining: { rate: 0, lastClaim: Date.now() },
+        themes: { current: 'cyan', owned: ['cyan'] },
+        stats: { matches: 0, totalQ: 0, correct: 0, wrong: 0, consecutive: 0 },
+        achievements: [], // List of unlocked IDs
+        settings: { sound: true }
+    },
+    
+    // Achievement List
+    achievList: [
+        { id: 'first_win', title: 'First Blood', desc: 'Complete your first match', reward: 50 },
+        { id: 'richie', title: 'Richie Rich', desc: 'Accumulate 1000 BITS', reward: 100 },
+        { id: 'sniper', title: 'Sniper', desc: 'Get 5 correct answers in a row', reward: 200 },
+        { id: 'miner', title: 'Crypto Miner', desc: 'Upgrade mining rig once', reward: 150 }
+    ],
 
-const TRY = {
-version: "1.0.0",
-audioCtx: null,
-player: null,
-stats: null,
-wallet: null,
-mining: null
+    load: function() {
+        const saved = localStorage.getItem('try_v5_data');
+        if (saved) {
+            const parsed = JSON.parse(saved);
+            this.data = { ...this.data, ...parsed }; // Merge to avoid missing new keys
+        }
+        this.applyTheme(this.data.themes.current);
+    },
+
+    save: function() {
+        localStorage.setItem('try_v5_data', JSON.stringify(this.data));
+        ui.updateAll();
+    },
+
+    register: function(name, age) {
+        this.data.name = name; this.data.age = age;
+        this.save();
+    },
+
+    // --- ECONOMY & MINING ---
+    addXP: function(amount) {
+        this.data.xp += amount;
+        this.data.level = Math.floor(this.data.xp / 100) + 1;
+        this.checkAchievements();
+        this.save();
+    },
+
+    calculateMining: function() {
+        const now = Date.now();
+        const hours = (now - this.data.mining.lastClaim) / (1000 * 60 * 60);
+        return Math.floor(hours * this.data.mining.rate);
+    },
+
+    claimMining: function() {
+        const amount = this.calculateMining();
+        if (amount > 0) {
+            this.addXP(amount);
+            this.data.mining.lastClaim = Date.now();
+            this.save();
+            sfx.correct();
+            alert(`Claimed ${amount} BITS from mining!`);
+        } else {
+            alert("Mining in progress... Wait longer.");
+        }
+    },
+
+    upgradeMiner: function() {
+        if (this.data.xp >= 500) {
+            this.data.xp -= 500;
+            this.data.mining.rate += 10; // +10 BITS/Hour
+            this.unlockAchievement('miner');
+            this.save();
+            sfx.correct();
+            alert("Rig Upgraded! Rate +10 BITS/H");
+        } else alert("Insufficient BITS!");
+    },
+
+    // --- THEMES ---
+    buyTheme: function(theme, cost) {
+        if (this.data.themes.owned.includes(theme)) {
+            this.data.themes.current = theme;
+            this.applyTheme(theme);
+            this.save();
+            alert(`Theme Applied: ${theme.toUpperCase()}`);
+        } else if (this.data.xp >= cost) {
+            this.data.xp -= cost;
+            this.data.themes.owned.push(theme);
+            this.data.themes.current = theme;
+            this.applyTheme(theme);
+            this.save();
+            sfx.correct();
+            alert("Theme Purchased & Applied!");
+        } else alert("Insufficient BITS!");
+    },
+
+    applyTheme: function(theme) {
+        document.body.className = `theme-${theme}`;
+    },
+
+    // --- ACHIEVEMENTS ---
+    checkAchievements: function() {
+        if (this.data.xp >= 1000) this.unlockAchievement('richie');
+        if (this.data.stats.matches >= 1) this.unlockAchievement('first_win');
+        if (this.data.stats.consecutive >= 5) this.unlockAchievement('sniper');
+    },
+
+    unlockAchievement: function(id) {
+        if (!this.data.achievements.includes(id)) {
+            this.data.achievements.push(id);
+            const ach = this.achievList.find(a => a.id === id);
+            this.data.xp += ach.reward;
+            this.save();
+            alert(`🏆 ACHIEVEMENT UNLOCKED: ${ach.title}\nReward: ${ach.reward} BITS`);
+            sfx.correct();
+        }
+    },
+    
+    // --- RESET ---
+    resetData: function() {
+        if(confirm("Factory Reset?")) { localStorage.removeItem('try_v5_data'); location.reload(); }
+    }
 };
 
-/* ================= DATABASE ================= */
-
-const DB = {
-
-init(){
-
-if(!localStorage.player_profile){
-localStorage.player_profile = JSON.stringify({
-name:"",
-age:0,
-level:1,
-xp:0,
-bits:0,
-rank:"Script Kiddie"
-});
-}
-
-if(!localStorage.game_stats){
-localStorage.game_stats = JSON.stringify({
-gamesPlayed:0,
-totalQuestions:0,
-correct:0,
-wrong:0
-});
-}
-
-if(!localStorage.wallet){
-localStorage.wallet = JSON.stringify({
-bits:0,
-lifeline5050:0,
-skip:0
-});
-}
-
-if(!localStorage.mining){
-localStorage.mining = JSON.stringify({
-lastMine: Date.now()
-});
-}
-
-},
-
-load(){
-TRY.player = JSON.parse(localStorage.player_profile);
-TRY.stats = JSON.parse(localStorage.game_stats);
-TRY.wallet = JSON.parse(localStorage.wallet);
-TRY.mining = JSON.parse(localStorage.mining);
-},
-
-save(){
-localStorage.player_profile = JSON.stringify(TRY.player);
-localStorage.game_stats = JSON.stringify(TRY.stats);
-localStorage.wallet = JSON.stringify(TRY.wallet);
-localStorage.mining = JSON.stringify(TRY.mining);
-}
-
+// --- 2. SOUND ENGINE ---
+const sfx = {
+    ctx: null,
+    init: function() { if(store.data.settings.sound && !this.ctx) this.ctx = new (window.AudioContext || window.webkitAudioContext)(); },
+    tone: function(f, t, d) {
+        if(!store.data.settings.sound || !this.ctx) { this.init(); return; }
+        const o = this.ctx.createOscillator(), g = this.ctx.createGain();
+        o.type = t; o.frequency.setValueAtTime(f, this.ctx.currentTime);
+        g.gain.setValueAtTime(0.05, this.ctx.currentTime); g.gain.exponentialRampToValueAtTime(0.0001, this.ctx.currentTime+d);
+        o.connect(g); g.connect(this.ctx.destination); o.start(); o.stop(this.ctx.currentTime+d);
+    },
+    click: () => { sfx.tone(800, 'square', 0.05); navigator.vibrate?.(10); },
+    correct: () => { sfx.tone(600, 'sine', 0.1); setTimeout(() => sfx.tone(1200, 'sine', 0.2), 100); navigator.vibrate?.([50,50]); },
+    wrong: () => { sfx.tone(150, 'sawtooth', 0.3); navigator.vibrate?.(200); },
+    alarm: () => { sfx.tone(800, 'sawtooth', 0.5); setTimeout(() => sfx.tone(600, 'sawtooth', 0.5), 500); }
 };
 
-/* ================= AUDIO ================= */
+// --- 3. UI CONTROLLER ---
+const ui = {
+    screens: { home: document.getElementById('home-screen'), category: document.getElementById('category-screen'), game: document.getElementById('game-screen'), result: document.getElementById('result-screen') },
+    
+    showScreen: function(name) {
+        Object.values(this.screens).forEach(s => { s.classList.remove('active'); s.classList.add('hidden'); });
+        this.screens[name].classList.remove('hidden'); this.screens[name].classList.add('active');
+    },
 
-const AUDIO = {
+    openModal: function(type) {
+        sfx.click();
+        document.getElementById('modal-overlay').classList.remove('hidden');
+        document.querySelectorAll('.modal-box').forEach(b => b.classList.add('hidden'));
+        document.getElementById(`modal-${type}`).classList.remove('hidden');
+        
+        if (type === 'leaderboard') app.genLeaderboard();
+        if (type === 'achievements') app.genAchievements();
+        if (type === 'register') document.getElementById('modal-overlay').onclick = null;
+        else document.getElementById('modal-overlay').onclick = (e) => { if(e.target.id === 'modal-overlay') ui.closeModal(); };
+        
+        ui.updateAll();
+    },
 
-init(){
-if(!TRY.audioCtx){
-TRY.audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-}
-},
+    closeModal: function() { sfx.click(); document.getElementById('modal-overlay').classList.add('hidden'); },
 
-beep(freq=500,time=0.1,type="sine"){
-if(!TRY.audioCtx) return;
+    switchShopTab: function(tab) {
+        document.querySelectorAll('.shop-content').forEach(c => c.classList.add('hidden'));
+        document.getElementById(`shop-${tab}`).classList.remove('hidden');
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        event.target.classList.add('active');
+    },
 
-const osc = TRY.audioCtx.createOscillator();
-const gain = TRY.audioCtx.createGain();
-
-osc.type = type;
-osc.frequency.value = freq;
-
-osc.connect(gain);
-gain.connect(TRY.audioCtx.destination);
-
-osc.start();
-
-gain.gain.exponentialRampToValueAtTime(
-0.00001,
-TRY.audioCtx.currentTime + time
-);
-},
-
-click(){ this.beep(700,0.05); },
-correct(){ this.beep(1200,0.15,"triangle"); },
-wrong(){ this.beep(200,0.25,"sawtooth"); },
-alarm(){ this.beep(90,0.5,"square"); },
-levelup(){ this.beep(1600,0.3,"triangle"); }
-
+    updateAll: function() {
+        const safe = (id, val) => { const el = document.getElementById(id); if(el) el.innerText = val; };
+        safe('user-points', store.data.xp); safe('current-level', store.data.level); safe('player-name-display', store.data.name || "Agent");
+        safe('shop-balance', store.data.xp); safe('mining-rate-display', store.data.mining.rate);
+        safe('mining-rate-modal', store.data.mining.rate); safe('mining-pending', store.calculateMining());
+        safe('qty-5050', store.data.inventory['5050']); safe('qty-skip', store.data.inventory['skip']);
+        
+        // Profile
+        safe('p-name', store.data.name); safe('p-xp', store.data.xp);
+        safe('p-rank', store.data.level < 5 ? "Script Kiddie" : store.data.level < 10 ? "Hacker" : "Elite Phantom");
+        const acc = store.data.stats.totalQ > 0 ? Math.round((store.data.stats.correct / store.data.stats.totalQ)*100) : 0;
+        safe('p-acc', acc + "%");
+    }
 };
 
-/* ================= HAPTIC ================= */
+// --- 4. MAIN APP ---
+const app = {
+    qs: [], qIdx: 0, score: 0, timer: null, timeLeft: 100, isBreach: false, active: false,
 
-const HAPTIC = {
-tap(){ navigator.vibrate?.(20); },
-success(){ navigator.vibrate?.([40,20,40]); },
-error(){ navigator.vibrate?.([80,40,80]); }
+    init: function() {
+        setTimeout(() => { document.getElementById('boot-screen').style.display = 'none'; document.getElementById('main-app').classList.remove('hidden'); store.load(); if(!store.data.name) ui.openModal('register'); }, 2500);
+        document.body.addEventListener('click', () => sfx.init(), { once: true });
+        setInterval(() => ui.updateAll(), 60000); // Auto update mining UI every minute
+    },
+
+    registerUser: function() {
+        const name = document.getElementById('reg-name').value.trim();
+        const age = document.getElementById('reg-age').value.trim();
+        if(name.length > 2 && age > 0) { store.register(name, age); ui.closeModal(); } else alert("Invalid Input");
+    },
+
+    showCategorySelection: function() { sfx.click(); ui.showScreen('category'); },
+
+    startGame: function(cat) {
+        sfx.click();
+        let list = (cat === 'mixed') ? window.questionBank : window.questionBank.filter(q => q.category === cat);
+        if(!list.length) { alert("No Data"); return; }
+        
+        // BREACH MODE CHECK (Every 5 levels)
+        this.isBreach = (store.data.level % 5 === 0 && store.data.level > 0);
+        
+        this.qs = list.sort(() => Math.random() - 0.5).slice(0, this.isBreach ? 5 : 10);
+        this.qIdx = 0; this.score = 0; this.active = true; store.data.stats.consecutive = 0;
+        
+        const screen = document.getElementById('game-screen');
+        const overlay = document.getElementById('breach-overlay');
+        
+        if (this.isBreach) {
+            screen.classList.add('breach-mode');
+            overlay.classList.remove('hidden');
+            sfx.alarm();
+        } else {
+            screen.classList.remove('breach-mode');
+            overlay.classList.add('hidden');
+        }
+
+        ui.showScreen('game');
+        this.loadQ();
+    },
+
+    loadQ: function() {
+        if (this.qIdx >= this.qs.length) { this.endGame(); return; }
+        const q = this.qs[this.qIdx];
+        document.getElementById('q-current').innerText = this.qIdx + 1;
+        document.getElementById('q-total').innerText = this.qs.length;
+        document.getElementById('question-text').innerText = q.question;
+        const cont = document.getElementById('options-container'); cont.innerHTML = '';
+        q.options.forEach(opt => {
+            const btn = document.createElement('button'); btn.className = 'option-btn'; btn.innerText = opt;
+            btn.onclick = () => this.handle(opt, btn); cont.appendChild(btn);
+        });
+        this.startTimer();
+    },
+
+    handle: function(sel, btn) {
+        if(!this.active) return; clearInterval(this.timer);
+        const cor = this.qs[this.qIdx].answer === sel;
+        
+        // Stats
+        store.data.stats.totalQ++;
+        if(cor) { store.data.stats.correct++; store.data.stats.consecutive++; } 
+        else { store.data.stats.wrong++; store.data.stats.consecutive = 0; }
+
+        if(cor) {
+            this.score += this.isBreach ? 20 : 10; // Double points in Breach
+            btn.classList.add('correct'); sfx.correct();
+        } else {
+            btn.classList.add('wrong'); sfx.wrong();
+            // Breach Fail Condition
+            if(this.isBreach) { alert("BREACH FAILED! SYSTEM LOCKED."); this.endGame(); return; }
+        }
+        
+        setTimeout(() => { this.qIdx++; this.loadQ(); }, 1500);
+    },
+
+    startTimer: function() {
+        clearInterval(this.timer); this.timeLeft = 100;
+        const bar = document.getElementById('timer-bar');
+        const speed = this.isBreach ? 100 : 150; // Faster in Breach
+        this.timer = setInterval(() => {
+            this.timeLeft -= 1; bar.style.width = this.timeLeft + '%';
+            if(this.timeLeft < 30) bar.style.backgroundColor = 'red';
+            else bar.style.backgroundColor = 'var(--secondary-color)';
+            if(this.timeLeft <= 0) {
+                clearInterval(this.timer); sfx.wrong();
+                if(this.isBreach) { alert("TIME OUT! BREACH FAILED."); this.endGame(); }
+                else { this.qIdx++; this.loadQ(); }
+            }
+        }, speed);
+    },
+
+    useLifeline: function(type) {
+        if(this.isBreach) { alert("LIFELINES DISABLED IN BREACH MODE!"); return; } // Hard mode
+        if(store.data.inventory[type] > 0) {
+            store.data.inventory[type]--;
+            if(type === 'skip') { clearInterval(this.timer); this.qIdx++; this.loadQ(); }
+            if(type === '5050') {
+                const ans = this.qs[this.qIdx].answer;
+                const opts = Array.from(document.querySelectorAll('.option-btn'));
+                let r = 0; opts.forEach(o => { if(o.innerText !== ans && r < 2) { o.style.display = 'none'; r++; }});
+            }
+            ui.updateAll();
+        } else alert("Empty!");
+    },
+
+    endGame: function() {
+        this.active = false; clearInterval(this.timer);
+        store.data.stats.matches++;
+        store.addXP(this.score);
+        document.getElementById('final-score').innerText = this.score;
+        document.getElementById('res-correct').innerText = store.data.stats.correct; // Show lifetime correct just for stats
+        document.getElementById('game-screen').classList.remove('breach-mode');
+        ui.showScreen('result');
+        if(this.score > 50) sfx.correct();
+    },
+
+    goHome: function() { sfx.click(); clearInterval(this.timer); ui.closeModal(); ui.showScreen('home'); },
+
+    shareScore: function() {
+        const t = `Agent ${store.data.name} scored ${this.score} BITS in TRY v5.0! Rank: ${document.getElementById('p-rank').innerText}`;
+        if(navigator.share) navigator.share({ title: 'TRY', text: t, url: location.href });
+        else { navigator.clipboard.writeText(t); alert("Copied!"); }
+    },
+
+    toggleSound: function() { store.data.settings.sound = !store.data.settings.sound; store.save(); ui.updateAll(); },
+
+    genLeaderboard: function() {
+        const list = document.getElementById('leaderboard-list'); list.innerHTML = '';
+        const ranks = [{name:"VampireSquad",xp:9999}, {name:"AI_Ghost",xp:5000}, {name:store.data.name||"You",xp:store.data.xp}].sort((a,b)=>b.xp-a.xp);
+        ranks.forEach((r,i) => { list.innerHTML += `<div style="display:flex;justify-content:space-between;padding:10px;border-bottom:1px solid #333;color:${r.name===store.data.name?'var(--primary-color)':'#aaa'}"><span>#${i+1} ${r.name}</span><span>${r.xp} XP</span></div>`; });
+    },
+
+    genAchievements: function() {
+        const list = document.getElementById('achievement-list'); list.innerHTML = '';
+        store.achievList.forEach(a => {
+            const unlocked = store.data.achievements.includes(a.id);
+            list.innerHTML += `<div class="achievement-row ${unlocked ? 'unlocked' : ''}"><i class="fas fa-${unlocked ? 'check-circle' : 'lock'}"></i><div class="ach-info"><h4>${a.title}</h4><p>${a.desc}</p></div></div>`;
+        });
+    }
 };
 
-/* ================= PLAYER ================= */
-
-const PLAYER = {
-
-register(name,age){
-TRY.player.name = name;
-TRY.player.age = age;
-DB.save();
-},
-
-addXP(amount){
-
-TRY.player.xp += amount;
-
-if(TRY.player.xp >= 100){
-TRY.player.level++;
-TRY.player.xp = 0;
-AUDIO.levelup();
-}
-
-this.updateRank();
-DB.save();
-},
-
-updateRank(){
-
-const lvl = TRY.player.level;
-
-if(lvl >= 20) TRY.player.rank = "Elite Phantom";
-else if(lvl >= 15) TRY.player.rank = "Shadow Hacker";
-else if(lvl >= 10) TRY.player.rank = "Ghost Operator";
-else if(lvl >= 5) TRY.player.rank = "Code Runner";
-else TRY.player.rank = "Script Kiddie";
-
-},
-
-addBits(amount){
-TRY.wallet.bits += amount;
-TRY.player.bits = TRY.wallet.bits;
-DB.save();
-}
-
-};
-
-/* ================= PROFILE UI ================= */
-
-function updateProfileUI(){
-
-document.getElementById("profileName").textContent = TRY.player.name;
-document.getElementById("profileAge").textContent = TRY.player.age;
-document.getElementById("profileRank").textContent = TRY.player.rank;
-
-document.getElementById("gamesPlayed").textContent = TRY.stats.gamesPlayed;
-document.getElementById("totalQuestions").textContent = TRY.stats.totalQuestions;
-document.getElementById("correctAnswers").textContent = TRY.stats.correct;
-document.getElementById("wrongAnswers").textContent = TRY.stats.wrong;
-
-let acc = TRY.stats.totalQuestions ?
-((TRY.stats.correct / TRY.stats.totalQuestions)*100).toFixed(1) : 0;
-
-document.getElementById("accuracyRate").textContent = acc + "%";
-
-document.getElementById("bitsCount").textContent = TRY.wallet.bits;
-document.getElementById("levelCount").textContent = TRY.player.level;
-
-}
-
-/* ================= MINING ================= */
-
-const MINING = {
-
-run(){
-
-let now = Date.now();
-let diff = now - TRY.mining.lastMine;
-
-let earned = Math.floor(diff / 60000);
-
-if(earned > 0){
-PLAYER.addBits(earned);
-TRY.mining.lastMine = now;
-DB.save();
-}
-
-}
-
-};
-
-/* ================= REGISTER ================= */
-
-function initRegister(){
-
-const modal = document.getElementById("registerModal");
-
-if(TRY.player.name){
-modal.style.display="none";
-updateProfileUI();
-return;
-}
-
-document.getElementById("registerBtn").onclick = ()=>{
-
-AUDIO.init();
-
-let name = document.getElementById("playerNameInput").value.trim();
-let age = document.getElementById("playerAgeInput").value;
-
-if(!name || !age){
-AUDIO.wrong();
-HAPTIC.error();
-return;
-}
-
-PLAYER.register(name,age);
-modal.style.display="none";
-updateProfileUI();
-
-AUDIO.correct();
-HAPTIC.success();
-
-};
-
-}
-
-/* ================= QUIZ ================= */
-
-const QUIZ = {
-
-currentQuestion:null,
-timer:null,
-timeLeft:30,
-bossMode:false,
-
-start(){
-
-TRY.stats.gamesPlayed++;
-DB.save();
-this.loadQuestion();
-
-},
-
-loadQuestion(){
-
-let q = window.getSmartQuestion ?
-getSmartQuestion() :
-window.QUESTIONS[Math.floor(Math.random()*QUESTIONS.length)];
-
-if(TRY.player.level >= 15 && q.difficulty === "easy"){
-q = getSmartQuestion();
-}
-
-this.currentQuestion = q;
-
-document.getElementById("questionText").textContent = q.question;
-document.getElementById("questionCategory").textContent = q.category;
-
-this.renderAnswers(q);
-this.startTimer();
-
-if(TRY.player.level % 5 === 0){
-this.activateBossMode();
-}else{
-this.deactivateBossMode();
-}
-
-},
-
-renderAnswers(q){
-
-const btns = document.querySelectorAll(".answer-btn");
-
-btns.forEach((b,i)=>{
-b.style.display="block";
-b.textContent = q.answers[i];
-b.onclick = ()=> this.answer(q.answers[i] === q.correct);
-});
-
-},
-
-startTimer(){
-
-clearInterval(this.timer);
-this.timeLeft = this.bossMode ? 20 : 30;
-
-document.getElementById("timer").textContent = this.timeLeft;
-
-this.timer = setInterval(()=>{
-
-this.timeLeft--;
-document.getElementById("timer").textContent = this.timeLeft;
-
-if(this.timeLeft <= 0){
-clearInterval(this.timer);
-this.answer(false);
-}
-
-},1000);
-
-},
-
-answer(isCorrect){
-
-clearInterval(this.timer);
-
-TRY.stats.totalQuestions++;
-
-if(isCorrect){
-
-TRY.stats.correct++;
-PLAYER.addXP(this.bossMode ? 40 : 20);
-PLAYER.addBits(this.bossMode ? 15 : 5);
-
-AUDIO.correct();
-HAPTIC.success();
-
-}else{
-
-TRY.stats.wrong++;
-AUDIO.wrong();
-HAPTIC.error();
-
-}
-
-if(TRY.stats.totalQuestions % 5 === 0){
-LEADERBOARD.save();
-}
-
-DB.save();
-updateProfileUI();
-
-setTimeout(()=> this.loadQuestion(), 600);
-
-},
-
-use5050(){
-
-if(TRY.wallet.lifeline5050 <= 0) return;
-
-TRY.wallet.lifeline5050--;
-
-const btns = [...document.querySelectorAll(".answer-btn")];
-
-let wrong = btns.filter(b => b.textContent !== this.currentQuestion.correct);
-
-wrong.sort(()=>Math.random()-0.5);
-
-if(wrong.length >= 2){
-wrong[0].style.display="none";
-wrong[1].style.display="none";
-}
-
-DB.save();
-updateProfileUI();
-
-},
-
-useSkip(){
-
-if(TRY.wallet.skip <= 0) return;
-
-TRY.wallet.skip--;
-DB.save();
-updateProfileUI();
-
-this.loadQuestion();
-
-},
-
-activateBossMode(){
-
-this.bossMode = true;
-document.body.classList.add("breach");
-AUDIO.alarm();
-
-},
-
-deactivateBossMode(){
-
-this.bossMode = false;
-document.body.classList.remove("breach");
-
-}
-
-};
-
-/* ================= INIT ================= */
-
-window.addEventListener("load",()=>{
-
-DB.init();
-DB.load();
-
-AUDIO.init();
-
-initRegister();
-updateProfileUI();
-
-setInterval(()=> MINING.run(),60000);
-setInterval(()=> ACH?.check?.(),5000);
-
-THEME?.load?.();
-LEADERBOARD?.render?.();
-
-if("serviceWorker" in navigator){
-navigator.serviceWorker.register("service-worker.js").catch(()=>{});
-}
-
-/* Buttons Safe Bind */
-
-document.getElementById("startGameBtn")?.addEventListener("click", ()=> QUIZ.start());
-document.getElementById("lifeline5050")?.addEventListener("click", ()=> QUIZ.use5050());
-document.getElementById("lifelineSkip")?.addEventListener("click", ()=> QUIZ.useSkip());
-
-const storeBtns = document.querySelectorAll(".store-item button");
-storeBtns[0]?.addEventListener("click", STORE.buy5050);
-storeBtns[1]?.addEventListener("click", STORE.buySkip);
-
-document.getElementById("shareBtn")?.addEventListener("click", SOCIAL.share);
-
-});
-
-/* ================= INSTALL PROMPT ================= */
-
-let deferredPrompt;
-
-window.addEventListener("beforeinstallprompt", e => {
-e.preventDefault();
-deferredPrompt = e;
-});
-
-function installApp(){
-if(!deferredPrompt) return;
-deferredPrompt.prompt();
-deferredPrompt.userChoice.then(()=> deferredPrompt = null);
-}
+document.addEventListener('DOMContentLoaded', app.init);
