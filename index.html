@@ -22,7 +22,7 @@
             <div class="profile-info">
                 <div class="avatar"><i class="fas fa-user-astronaut"></i></div>
                 <div class="stats">
-                    <span id="player-name">Guest Agent</span>
+                    <span id="player-name">Agent 007</span>
                     <span class="level-badge">LVL <span id="current-level">1</span></span>
                 </div>
             </div>
@@ -36,17 +36,12 @@
                 <h1 class="glitch-text" data-text="TRY">TRY</h1>
                 <p class="subtitle">SYSTEM READY. INITIATE PROTOCOL.</p>
             </div>
-            
             <div class="menu-grid">
                 <button class="cyber-btn primary" onclick="app.showCategorySelection()">
                     <span class="btn-text">START MISSION</span>
-                    <span class="btn-glitch"></span>
                 </button>
                 <button class="cyber-btn secondary" onclick="app.showProfile()">
                     <span class="btn-text">PROFILE DATA</span>
-                </button>
-                <button class="cyber-btn secondary" onclick="app.showSettings()">
-                    <span class="btn-text">SYSTEM CONFIG</span>
                 </button>
             </div>
         </section>
@@ -55,20 +50,16 @@
             <h2 class="screen-title">SELECT TARGET</h2>
             <div class="category-list" id="category-container">
                 <div class="cat-card" onclick="app.startGame('cyber_security')">
-                    <i class="fas fa-shield-alt"></i>
-                    <span>CYBER SECURITY</span>
+                    <i class="fas fa-shield-alt"></i><span>CYBER SECURITY</span>
                 </div>
                 <div class="cat-card" onclick="app.startGame('general')">
-                    <i class="fas fa-brain"></i>
-                    <span>GENERAL KNOWLEDGE</span>
+                    <i class="fas fa-brain"></i><span>GENERAL KNOWLEDGE</span>
                 </div>
                 <div class="cat-card" onclick="app.startGame('islamic')">
-                    <i class="fas fa-moon"></i>
-                    <span>ISLAMIC</span>
+                    <i class="fas fa-moon"></i><span>ISLAMIC</span>
                 </div>
                 <div class="cat-card" onclick="app.startGame('mixed')">
-                    <i class="fas fa-random"></i>
-                    <span>MIXED MODE</span>
+                    <i class="fas fa-random"></i><span>MIXED MODE</span>
                 </div>
             </div>
             <button class="back-btn" onclick="app.goHome()"><i class="fas fa-arrow-left"></i> BACK</button>
@@ -82,13 +73,12 @@
                 <div class="lifelines">
                     <button id="life-5050" class="life-btn" onclick="game.useLifeline('5050')">50:50</button>
                     <button id="life-skip" class="life-btn" onclick="game.useLifeline('skip')">SKIP</button>
-                    <button id="life-time" class="life-btn" onclick="game.useLifeline('time')">+TIME</button>
                 </div>
             </div>
 
             <div class="question-area">
                 <span class="q-badge">QUERY <span id="q-current">1</span>/<span id="q-total">10</span></span>
-                <h3 id="question-text" class="typewriter">Loading Data stream...</h3>
+                <h3 id="question-text">Loading Data stream...</h3>
             </div>
 
             <div class="options-area" id="options-container">
@@ -111,19 +101,6 @@
         </section>
 
     </div>
-
-    <audio id="bg-music" loop>
-        <source src="assets/sounds/cyber-bg.mp3" type="audio/mpeg">
-    </audio>
-    <audio id="click-sound">
-        <source src="assets/sounds/click.mp3" type="audio/mpeg">
-    </audio>
-    <audio id="correct-sound">
-        <source src="assets/sounds/correct.mp3" type="audio/mpeg">
-    </audio>
-    <audio id="wrong-sound">
-        <source src="assets/sounds/wrong.mp3" type="audio/mpeg">
-    </audio>
 
     <script src="js/questions.js"></script>
     <script src="js/ui.js"></script>
