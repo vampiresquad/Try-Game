@@ -1,50 +1,97 @@
-/* MAIN GAME ENGINE: Controls Logic, Score, Timer */
+/* MAIN GAME ENGINE: Controls Logic, Score, Timer + Sound Generator */
+
+// --- SOUND SYSTEM (NO ASSETS NEEDED) ---
+const sfx = {
+    ctx: null, // Audio Context
+
+    init: function() {
+        // Initialize Audio Context on first user interaction
+        if (!this.ctx) {
+            this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+        }
+    },
+
+    playTone: function(freq, type, duration) {
+        if (!this.ctx) this.init();
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        
+        osc.type = type; // sine, square, sawtooth, triangle
+        osc.frequency.setValueAtTime(freq, this.ctx.currentTime);
+        
+        gain.gain.setValueAtTime(0.1, this.ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.0001, this.ctx.currentTime + duration);
+
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+        
+        osc.start();
+        osc.stop(this.ctx.currentTime + duration);
+    },
+
+    playClick: function() {
+        this.playTone(800, 'square', 0.05); // Short robotic blip
+    },
+
+    playCorrect: function() {
+        // Two tones ascending (Success feel)
+        this.playTone(600, 'sine', 0.1);
+        setTimeout(() => this.playTone(1200, 'sine', 0.2), 100);
+    },
+
+    playWrong: function() {
+        // Low buzzing sound (Error feel)
+        this.playTone(150, 'sawtooth', 0.3);
+    }
+};
+
 
 const app = {
     // --- GAME STATE ---
-    currentQuestions: [], // Filtered & Shuffled questions
+    currentQuestions: [],
     currentQIndex: 0,
     score: 0,
     correctCount: 0,
     wrongCount: 0,
     timer: null,
-    timeLeft: 100, // Percentage
+    timeLeft: 100,
     isGameActive: false,
     
     // --- CONFIGURATION ---
-    totalTimePerQ: 15, // Seconds per question
+    totalTimePerQ: 15, 
     pointsPerQ: 10,
 
     // --- 1. INITIALIZATION ---
     init: function() {
         console.log("System Initialized...");
-        // Button Listeners are already set in HTML onclick attributes
-        // pointing to app.method()
+        // Initialize sound on first click to bypass browser restrictions
+        document.body.addEventListener('click', () => sfx.init(), { once: true });
     },
 
     // --- 2. START GAME LOGIC ---
     showCategorySelection: function() {
+        sfx.playClick();
         ui.showScreen('category');
     },
 
     startGame: function(category) {
+        sfx.playClick();
         console.log("Mission Started: " + category);
         
         // 1. Filter Questions
         let filteredQs = [];
         if (category === 'mixed') {
-            filteredQs = window.questionBank; // All questions
+            filteredQs = window.questionBank;
         } else {
             filteredQs = window.questionBank.filter(q => q.category === category);
         }
 
-        // Check if questions exist
         if (filteredQs.length < 1) {
             alert("No data found for this mission!");
             return;
         }
 
-        // 2. Shuffle Questions (Randomize)
+        // 2. Shuffle
         this.currentQuestions = filteredQs.sort(() => Math.random() - 0.5);
         
         // 3. Reset State
@@ -54,11 +101,9 @@ const app = {
         this.wrongCount = 0;
         this.isGameActive = true;
 
-        // 4. Update UI & Show Screen
         document.getElementById('user-points').innerText = "0";
         ui.showScreen('game');
         
-        // 5. Load First Question
         this.loadQuestion();
     },
 
@@ -69,38 +114,30 @@ const app = {
         }
 
         const q = this.currentQuestions[this.currentQIndex];
-        
-        // Update UI
         ui.updateQuestion(q, this.currentQIndex + 1, this.currentQuestions.length);
-        
-        // Reset & Start Timer
         this.resetTimer();
     },
 
     // --- 3. ANSWER HANDLING ---
     handleAnswer: function(selectedOption, btnElement) {
-        if (!this.isGameActive) return; // Prevent multiple clicks
+        if (!this.isGameActive) return;
         
-        this.stopTimer(); // Stop clock immediately
+        this.stopTimer();
         
         const currentQ = this.currentQuestions[this.currentQIndex];
         const isCorrect = (selectedOption === currentQ.answer);
 
-        // Visual Feedback
         ui.showFeedback(isCorrect, btnElement);
 
-        // Logic Update
         if (isCorrect) {
+            sfx.playCorrect(); // Play Generated Correct Sound
             this.score += this.pointsPerQ;
             this.correctCount++;
-            // Play Sound (Optional)
-            // new Audio('assets/sounds/correct.mp3').play();
         } else {
+            sfx.playWrong(); // Play Generated Wrong Sound
             this.wrongCount++;
-            // new Audio('assets/sounds/wrong.mp3').play();
         }
 
-        // Wait 1.5s then go to next
         setTimeout(() => {
             this.currentQIndex++;
             this.loadQuestion();
@@ -110,9 +147,9 @@ const app = {
     // --- 4. TIMER LOGIC ---
     resetTimer: function() {
         clearInterval(this.timer);
-        this.timeLeft = 100; // 100% width
+        this.timeLeft = 100; 
         
-        const decrement = 100 / (this.totalTimePerQ * 10); // Calculation for smooth bar
+        const decrement = 100 / (this.totalTimePerQ * 10); 
 
         this.timer = setInterval(() => {
             this.timeLeft -= decrement;
@@ -122,7 +159,7 @@ const app = {
                 clearInterval(this.timer);
                 this.timeUp();
             }
-        }, 100); // Update every 100ms
+        }, 100); 
     },
 
     stopTimer: function() {
@@ -130,12 +167,12 @@ const app = {
     },
 
     timeUp: function() {
-        // Treat as wrong answer
+        sfx.playWrong(); // Play Sound
         this.wrongCount++;
-        // Show correct answer visually (Red feedback on nothing, Green on correct)
+        
+        // Highlight correct answer
         const allBtns = document.querySelectorAll('.option-btn');
         const currentQ = this.currentQuestions[this.currentQIndex];
-        
         allBtns.forEach(btn => {
             if (btn.innerText === currentQ.answer) {
                 btn.classList.add('correct');
@@ -152,31 +189,35 @@ const app = {
     endGame: function() {
         this.isGameActive = false;
         this.stopTimer();
+        // Play success sound
+        if(this.score > 0) sfx.playCorrect();
         ui.showResult(this.score, this.correctCount, this.wrongCount, this.currentQuestions.length);
     },
 
     // --- 6. NAVIGATION ---
     goHome: function() {
+        sfx.playClick();
         this.stopTimer();
         ui.showScreen('home');
     },
 
     showProfile: function() {
+        sfx.playClick();
         alert("Access Denied: Agent Profile Encrypted.");
     },
 
-    showSettings: function() {
-        alert("System Configuration: Locked.");
-    },
-
-    // --- 7. LIFELINES (Optional) ---
+    // --- 7. LIFELINES ---
     useLifeline: function(type) {
+        sfx.playClick();
         const btn = document.getElementById(`life-${type}`);
-        btn.disabled = true; // Disable after use
+        
+        // Check if already used
+        if(btn.disabled) return;
+
+        btn.disabled = true;
         btn.style.opacity = "0.5";
 
         if (type === '5050') {
-            // Logic to remove 2 wrong options
             const currentQ = this.currentQuestions[this.currentQIndex];
             const options = document.querySelectorAll('.option-btn');
             let removed = 0;
@@ -193,13 +234,9 @@ const app = {
             this.currentQIndex++;
             this.loadQuestion();
         }
-        else if (type === 'time') {
-            this.timeLeft = Math.min(this.timeLeft + 30, 100); // Add time
-        }
     }
 };
 
-// Start App when DOM is ready
 document.addEventListener('DOMContentLoaded', () => {
     app.init();
 });
