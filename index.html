@@ -3,19 +3,19 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>TRY - Ultimate Quiz System</title>
+    <title>TRY - Ultimate System v5.0</title>
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#00f3ff">
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;700;900&family=Share+Tech+Mono&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="css/responsive.css">
 </head>
-<body>
-
-    <div id="boot-screen">
+<body class="theme-cyan"> <div id="boot-screen">
         <div class="terminal-loader">
-            <div class="text">SYSTEM_BOOT_SEQUENCE...</div>
+            <div class="text">SYSTEM_INITIALIZING_V5.0...</div>
             <div class="progress-line"></div>
-            <div class="log" id="boot-log">INITIALIZING CORE KERNEL...</div>
+            <div class="log" id="boot-log">LOADING MODULES...</div>
         </div>
     </div>
 
@@ -25,7 +25,7 @@
             <div class="profile-info" onclick="ui.openModal('profile')">
                 <div class="avatar"><i class="fas fa-user-secret"></i></div>
                 <div class="stats">
-                    <span id="player-name-display">Unknown</span>
+                    <span id="player-name-display">Agent</span>
                     <span class="level-badge">LVL <span id="current-level">1</span></span>
                 </div>
             </div>
@@ -39,21 +39,31 @@
                 <h1 class="glitch-text" data-text="TRY">TRY</h1>
                 <p class="subtitle">SECURE CONNECTION ESTABLISHED</p>
             </div>
+            
+            <div class="mining-widget" onclick="ui.openModal('mining')">
+                <i class="fas fa-hammer"></i> MINING: <span id="mining-rate-display">0</span> BITS/H
+            </div>
+
             <div class="menu-grid">
                 <button class="cyber-btn primary" onclick="app.showCategorySelection()">
                     <i class="fas fa-play"></i> START MISSION
                 </button>
                 <div class="btn-row">
-                    <button class="cyber-btn secondary" onclick="ui.openModal('leaderboard')">
-                        <i class="fas fa-trophy"></i> RANKING
+                    <button class="cyber-btn secondary" onclick="ui.openModal('achievements')">
+                        <i class="fas fa-medal"></i> BADGES
                     </button>
                     <button class="cyber-btn secondary" onclick="ui.openModal('shop')">
                         <i class="fas fa-shopping-cart"></i> MARKET
                     </button>
                 </div>
-                <button class="cyber-btn danger-outline" onclick="ui.openModal('settings')">
-                    <i class="fas fa-cog"></i> SYSTEM CONFIG
-                </button>
+                <div class="btn-row">
+                    <button class="cyber-btn secondary" onclick="ui.openModal('leaderboard')">
+                        <i class="fas fa-trophy"></i> RANK
+                    </button>
+                    <button class="cyber-btn danger-outline" onclick="ui.openModal('settings')">
+                        <i class="fas fa-cog"></i> CONFIG
+                    </button>
+                </div>
             </div>
         </section>
 
@@ -65,10 +75,11 @@
                 <div class="cat-card" onclick="app.startGame('islamic')"><i class="fas fa-moon"></i><span>ISLAMIC</span></div>
                 <div class="cat-card" onclick="app.startGame('mixed')"><i class="fas fa-random"></i><span>MIXED MODE</span></div>
             </div>
-            <button class="back-btn" onclick="app.goHome()">ABORT MISSION</button>
+            <button class="back-btn" onclick="app.goHome()">ABORT</button>
         </section>
 
         <section id="game-screen" class="screen hidden">
+            <div id="breach-overlay" class="hidden">WARNING: BREACH DETECTED</div>
             <div class="game-hud">
                 <div class="progress-bar-container"><div class="progress-fill" id="timer-bar"></div></div>
                 <div class="combo-text hidden" id="combo-display">COMBO x2!</div>
@@ -79,7 +90,7 @@
             </div>
             <div class="question-area">
                 <span class="q-badge">QUERY <span id="q-current">1</span>/<span id="q-total">10</span></span>
-                <h3 id="question-text">Loading Data Stream...</h3>
+                <h3 id="question-text">Loading...</h3>
             </div>
             <div class="options-area" id="options-container"></div>
         </section>
@@ -95,55 +106,76 @@
                     <div class="stat">Correct: <span id="res-correct" class="green">0</span></div>
                     <div class="stat">Wrong: <span id="res-wrong" class="red">0</span></div>
                 </div>
-                <button class="cyber-btn secondary" onclick="app.shareScore()">
-                    <i class="fas fa-share-alt"></i> CHALLENGE FRIENDS
-                </button>
+                <button class="cyber-btn secondary" onclick="app.shareScore()"><i class="fas fa-share-alt"></i> CHALLENGE FRIENDS</button>
                 <br>
                 <button class="cyber-btn primary" onclick="app.goHome()">RETURN TO BASE</button>
             </div>
         </section>
 
-        <footer class="game-footer">
-            Developed by <span class="author-name">Muhammad Shourov</span>
-        </footer>
+        <footer class="game-footer">Developed by <span class="author-name">Muhammad Shourov</span></footer>
 
         <div id="modal-overlay" class="hidden">
             
-            <div id="modal-register" class="modal-box hidden" data-persistent="true">
+            <div id="modal-register" class="modal-box hidden">
                 <h3>IDENTITY VERIFICATION</h3>
-                <p style="font-size: 0.8rem; color: #888; margin-bottom: 15px;">Enter your details to access the system.</p>
-                <input type="text" id="reg-name" class="cyber-input" placeholder="Enter Codename / Name" maxlength="15">
+                <input type="text" id="reg-name" class="cyber-input" placeholder="Enter Codename" maxlength="15">
                 <input type="number" id="reg-age" class="cyber-input" placeholder="Enter Age" max="99">
                 <button class="cyber-btn primary" onclick="app.registerUser()">GRANT ACCESS</button>
             </div>
 
-            <div id="modal-profile" class="modal-box hidden">
-                <h3>AGENT DOSSIER</h3>
-                <div class="modal-content profile-stats">
-                    <div class="p-row"><span>Name:</span> <span id="p-name" class="hacker-text">--</span></div>
-                    <div class="p-row"><span>Age:</span> <span id="p-age">--</span></div>
-                    <div class="p-row"><span>Rank:</span> <span id="p-rank" class="hacker-text">--</span></div>
-                    <hr class="neon-line">
-                    <div class="p-row"><span>Matches Played:</span> <span id="p-matches">0</span></div>
-                    <div class="p-row"><span>Total Questions:</span> <span id="p-total-q">0</span></div>
-                    <div class="p-row"><span class="green">Correct:</span> <span id="p-correct">0</span></div>
-                    <div class="p-row"><span class="red">Wrong:</span> <span id="p-wrong">0</span></div>
-                </div>
+            <div id="modal-mining" class="modal-box hidden">
+                <h3>CRYPTO MINER v1.0</h3>
+                <div class="mining-animation"><i class="fas fa-server"></i> <i class="fas fa-network-wired"></i> <i class="fas fa-coins"></i></div>
+                <p>Pending: <span id="mining-pending" class="green">0</span> BITS</p>
+                <p>Rate: <span id="mining-rate-modal">0</span> BITS/Hour</p>
+                <button class="cyber-btn primary" onclick="store.claimMining()">CLAIM REWARD</button>
+                <hr class="neon-line">
+                <button class="cyber-btn secondary" onclick="store.upgradeMiner()">UPGRADE RIG (500 BITS)</button>
+                <button class="cyber-btn small" onclick="ui.closeModal()">CLOSE</button>
+            </div>
+
+            <div id="modal-achievements" class="modal-box hidden">
+                <h3>MEDALS & HONORS</h3>
+                <div class="achievement-list" id="achievement-list">
+                    </div>
                 <button class="cyber-btn small" onclick="ui.closeModal()">CLOSE</button>
             </div>
 
             <div id="modal-shop" class="modal-box hidden">
                 <h3>BLACK MARKET</h3>
+                <div class="tab-menu">
+                    <button class="tab-btn active" onclick="ui.switchShopTab('items')">ITEMS</button>
+                    <button class="tab-btn" onclick="ui.switchShopTab('themes')">THEMES</button>
+                </div>
                 <p class="balance">Balance: <span id="shop-balance">0</span> BITS</p>
-                <div class="shop-grid">
-                    <div class="shop-item" onclick="store.buyItem('5050', 50)">
-                        <i class="fas fa-cut"></i><span>50:50 Tool</span><small>50 BITS</small>
+                
+                <div id="shop-items" class="shop-content">
+                    <div class="shop-grid">
+                        <div class="shop-item" onclick="store.buyItem('5050', 50)"><i class="fas fa-cut"></i><span>50:50</span><small>50 BITS</small></div>
+                        <div class="shop-item" onclick="store.buyItem('skip', 80)"><i class="fas fa-forward"></i><span>Skip</span><small>80 BITS</small></div>
                     </div>
-                    <div class="shop-item" onclick="store.buyItem('skip', 80)">
-                        <i class="fas fa-forward"></i><span>Skip Data</span><small>80 BITS</small>
+                </div>
+
+                <div id="shop-themes" class="shop-content hidden">
+                    <div class="shop-grid">
+                        <div class="shop-item" onclick="store.buyTheme('cyan', 0)"><i class="fas fa-circle" style="color:#00f3ff"></i><span>CYAN (Default)</span><small>OWNED</small></div>
+                        <div class="shop-item" onclick="store.buyTheme('green', 1000)"><i class="fas fa-circle" style="color:#0f0"></i><span>MATRIX</span><small>1000 BITS</small></div>
+                        <div class="shop-item" onclick="store.buyTheme('gold', 2500)"><i class="fas fa-circle" style="color:#ffd700"></i><span>GOLD</span><small>2500 BITS</small></div>
+                        <div class="shop-item" onclick="store.buyTheme('red', 5000)"><i class="fas fa-circle" style="color:#ff0000"></i><span>RED ERROR</span><small>5000 BITS</small></div>
                     </div>
                 </div>
                 <button class="cyber-btn small" onclick="ui.closeModal()">EXIT</button>
+            </div>
+
+            <div id="modal-profile" class="modal-box hidden">
+                <h3>AGENT DOSSIER</h3>
+                <div class="modal-content profile-stats">
+                    <div class="p-row"><span>Name:</span> <span id="p-name">--</span></div>
+                    <div class="p-row"><span>Rank:</span> <span id="p-rank">--</span></div>
+                    <div class="p-row"><span>XP:</span> <span id="p-xp">0</span></div>
+                    <div class="p-row"><span>Accuracy:</span> <span id="p-acc">0%</span></div>
+                </div>
+                <button class="cyber-btn small" onclick="ui.closeModal()">CLOSE</button>
             </div>
 
             <div id="modal-leaderboard" class="modal-box hidden">
@@ -154,14 +186,8 @@
 
             <div id="modal-settings" class="modal-box hidden">
                 <h3>SYSTEM CONFIG</h3>
-                <div class="setting-row">
-                    <span>Sound Effects</span>
-                    <button class="toggle-btn on" id="btn-sound" onclick="app.toggleSound()">ON</button>
-                </div>
-                <div class="setting-row">
-                    <span>Factory Reset</span>
-                    <button class="cyber-btn danger small" onclick="store.resetData()">RESET</button>
-                </div>
+                <div class="setting-row"><span>Sound</span> <button class="toggle-btn on" id="btn-sound" onclick="app.toggleSound()">ON</button></div>
+                <div class="setting-row"><span>Reset Data</span> <button class="cyber-btn danger small" onclick="store.resetData()">RESET</button></div>
                 <button class="cyber-btn small" onclick="ui.closeModal()">SAVE & EXIT</button>
             </div>
 
@@ -169,5 +195,12 @@
     </div>
 
     <script src="js/questions.js"></script>
-    <script src="js/app.js"></script> </body>
+    <script src="js/app.js"></script>
+    <script>
+        // Register PWA Service Worker
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('service-worker.js');
+        }
+    </script>
+</body>
 </html>
