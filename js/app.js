@@ -252,47 +252,119 @@ HAPTIC.success();
 }
 
 
-/* ================= BASE QUIZ ENGINE ================= */
+/* ================= ADVANCED QUIZ ENGINE ================= */
 
 const QUIZ = {
 
 currentQuestion:null,
+timer:null,
+timeLeft:30,
+bossMode:false,
+
+start(){
+
+TRY.stats.gamesPlayed++;
+DB.save();
+this.loadQuestion();
+
+},
+
+/* ================= LOAD QUESTION ================= */
 
 loadQuestion(){
 
-if(!window.QUESTIONS) return;
+if(!window.getSmartQuestion) return;
 
-let q = QUESTIONS[Math.floor(Math.random()*QUESTIONS.length)];
+let q = getSmartQuestion();
+
+/* Difficulty Scaling By Level */
+if(TRY.player.level >= 15 && q.difficulty === "easy"){
+q = getSmartQuestion();
+}
+
 this.currentQuestion = q;
 
 document.getElementById("questionText").textContent = q.question;
+document.getElementById("questionCategory").textContent = q.category;
+
+this.renderAnswers(q);
+this.startTimer();
+
+/* Boss Breach Mode */
+if(TRY.player.level % 5 === 0){
+this.activateBossMode();
+}else{
+this.deactivateBossMode();
+}
+
+},
+
+/* ================= ANSWERS ================= */
+
+renderAnswers(q){
 
 const btns = document.querySelectorAll(".answer-btn");
 
 btns.forEach((b,i)=>{
+
+b.style.display="block";
 b.textContent = q.answers[i];
 
 b.onclick = ()=>{
 this.answer(q.answers[i] === q.correct);
 };
+
 });
 
 },
 
+/* ================= TIMER ================= */
+
+startTimer(){
+
+clearInterval(this.timer);
+this.timeLeft = this.bossMode ? 20 : 30;
+
+document.getElementById("timer").textContent = this.timeLeft;
+
+this.timer = setInterval(()=>{
+
+this.timeLeft--;
+document.getElementById("timer").textContent = this.timeLeft;
+
+if(this.timeLeft <= 0){
+clearInterval(this.timer);
+this.answer(false);
+}
+
+},1000);
+
+},
+
+/* ================= ANSWER RESULT ================= */
+
 answer(isCorrect){
+
+clearInterval(this.timer);
 
 TRY.stats.totalQuestions++;
 
 if(isCorrect){
+
 TRY.stats.correct++;
-PLAYER.addXP(20);
-PLAYER.addBits(5);
+
+PLAYER.addXP(this.bossMode ? 40 : 20);
+PLAYER.addBits(this.bossMode ? 15 : 5);
+
 AUDIO.correct();
 HAPTIC.success();
+
 }else{
+
 TRY.stats.wrong++;
 AUDIO.wrong();
 HAPTIC.error();
+
 }
 
 DB.save();
@@ -300,12 +372,79 @@ updateProfileUI();
 
 setTimeout(()=>{
 this.loadQuestion();
-},500);
+},600);
+
+},
+
+/* ================= LIFELINE 50:50 ================= */
+
+use5050(){
+
+if(TRY.wallet.lifeline5050 <= 0) return;
+
+TRY.wallet.lifeline5050--;
+
+const btns = [...document.querySelectorAll(".answer-btn")];
+
+let wrong = btns.filter(b => b.textContent !== this.currentQuestion.correct);
+
+wrong.sort(()=>Math.random()-0.5);
+
+wrong[0].style.display="none";
+wrong[1].style.display="none";
+
+DB.save();
+updateProfileUI();
+
+},
+
+/* ================= LIFELINE SKIP ================= */
+
+useSkip(){
+
+if(TRY.wallet.skip <= 0) return;
+
+TRY.wallet.skip--;
+DB.save();
+updateProfileUI();
+
+this.loadQuestion();
+
+},
+
+/* ================= BOSS MODE ================= */
+
+activateBossMode(){
+
+this.bossMode = true;
+document.body.classList.add("breach");
+AUDIO.alarm();
+
+},
+
+deactivateBossMode(){
+
+this.bossMode = false;
+document.body.classList.remove("breach");
 
 }
 
 };
 
+
+/* ================= BUTTON LINK ================= */
+
+document.getElementById("lifeline5050").onclick = ()=>{
+QUIZ.use5050();
+};
+
+document.getElementById("lifelineSkip").onclick = ()=>{
+QUIZ.useSkip();
+};
+
+document.getElementById("startGameBtn").onclick = ()=>{
+QUIZ.start();
+};
 
 /* ================= START GAME ================= */
 
