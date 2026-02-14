@@ -1,6 +1,6 @@
-/* TRY - ULTIMATE QUIZ SYSTEM ENGINE v5.0
+/* TRY - ULTIMATE QUIZ SYSTEM ENGINE v5.1
    Developed by Muhammad Shourov
-   Features: PWA, Mining, Themes, Breach Mode, Achievements, Combo System
+   Features: PWA, Live Mining, Advanced Profile, Themes, Breach Mode, Achievements
    Status: STABLE & OPTIMIZED
 */
 
@@ -17,7 +17,8 @@ const store = {
         inventory: { '5050': 2, 'skip': 2 },
         mining: { rate: 0, lastClaim: Date.now() },
         themes: { current: 'cyan', owned: ['cyan'] },
-        stats: { matches: 0, totalQ: 0, correct: 0, wrong: 0, consecutive: 0 },
+        // Updated Stats to track Total Mined
+        stats: { matches: 0, totalQ: 0, correct: 0, wrong: 0, consecutive: 0, totalMined: 0 },
         achievements: [], // List of unlocked IDs
         settings: { sound: true }
     },
@@ -40,6 +41,8 @@ const store = {
             
             // Fix: Reset mining time if invalid
             if (!this.data.mining.lastClaim) this.data.mining.lastClaim = Date.now();
+            // Fix: Ensure totalMined exists for old users
+            if (!this.data.stats.totalMined) this.data.stats.totalMined = 0;
         }
         this.applyTheme(this.data.themes.current);
     },
@@ -85,6 +88,11 @@ const store = {
         const amount = this.calculateMining();
         if (amount > 0) {
             this.addXP(amount);
+            
+            // Track Total Mined Stats
+            if (!this.data.stats.totalMined) this.data.stats.totalMined = 0;
+            this.data.stats.totalMined += amount;
+
             this.data.mining.lastClaim = Date.now();
             this.save();
             sfx.correct();
@@ -106,7 +114,7 @@ const store = {
         } else alert(`ACCESS DENIED: Insufficient BITS. Need ${cost}.`);
     },
 
-    // --- SHOP SYSTEM (ADDED MISSING LOGIC) ---
+    // --- SHOP SYSTEM ---
     buyItem: function(type, cost) {
         if (this.data.xp >= cost) {
             this.data.xp -= cost;
@@ -158,7 +166,6 @@ const store = {
                 this.data.xp += ach.reward;
                 this.save();
                 sfx.correct();
-                // We use setTimeout to ensure alert doesn't block UI immediately
                 setTimeout(() => {
                     alert(`🏆 MEDAL UNLOCKED: ${ach.title}\nReward: ${ach.reward} BITS`);
                 }, 500);
@@ -179,7 +186,6 @@ const store = {
 const sfx = {
     ctx: null,
     init: function() { 
-        // Initialize AudioContext on first interaction
         if(store.data.settings.sound && !this.ctx) {
             this.ctx = new (window.AudioContext || window.webkitAudioContext)(); 
         }
@@ -212,7 +218,7 @@ const sfx = {
     }
 };
 
-// --- 3. UI CONTROLLER ---
+// --- 3. UI CONTROLLER (UPDATED) ---
 const ui = {
     screens: { 
         home: document.getElementById('home-screen'), 
@@ -236,11 +242,9 @@ const ui = {
         document.querySelectorAll('.modal-box').forEach(b => b.classList.add('hidden'));
         document.getElementById(`modal-${type}`).classList.remove('hidden');
         
-        // Dynamic Content Loading
         if (type === 'leaderboard') app.genLeaderboard();
         if (type === 'achievements') app.genAchievements();
         
-        // Prevent closing Register modal by clicking outside
         if (type === 'register') {
             document.getElementById('modal-overlay').onclick = null;
         } else {
@@ -271,16 +275,17 @@ const ui = {
         return "Elite Phantom";
     },
 
+    // --- CENTRAL UI UPDATE FUNCTION ---
     updateAll: function() {
         const safe = (id, val) => { const el = document.getElementById(id); if(el) el.innerText = val; };
         
-        // --- BASIC STATS ---
+        // Basic Stats
         safe('user-points', store.data.xp); 
         safe('current-level', store.data.level); 
         safe('player-name-display', store.data.name || "Agent");
         safe('shop-balance', store.data.xp); 
         
-        // --- MINING LIVE UI (NEW) ---
+        // --- LIVE MINING UI ---
         const mRate = store.data.mining.rate;
         safe('mining-rate-display', mRate);
         safe('mining-rate-modal', mRate); 
@@ -297,11 +302,11 @@ const ui = {
             if(mAnim) mAnim.classList.add('hidden');
         }
 
-        // --- INVENTORY ---
+        // Inventory
         safe('qty-5050', store.data.inventory['5050'] || 0); 
         safe('qty-skip', store.data.inventory['skip'] || 0);
         
-        // --- DETAILED PROFILE UI (NEW) ---
+        // --- DETAILED PROFILE UI ---
         safe('p-name', store.data.name || "Unknown"); 
         safe('p-age', store.data.age || "--");
         safe('p-rank', this.getRank(store.data.level));
@@ -315,7 +320,7 @@ const ui = {
         const acc = total > 0 ? Math.round((correct / total)*100) : 0;
         safe('p-acc', acc + "%");
 
-        // --- BADGES IN PROFILE (NEW) ---
+        // --- BADGES IN PROFILE ---
         const badgeContainer = document.getElementById('p-badges-grid');
         if (badgeContainer) {
             badgeContainer.innerHTML = '';
@@ -323,7 +328,6 @@ const ui = {
                 badgeContainer.innerHTML = '<span class="no-badge">No Intel Data</span>';
             } else {
                 store.data.achievements.forEach(id => {
-                    // Find icon based on achievement ID
                     let icon = 'medal'; // default
                     if(id === 'richie') icon = 'gem';
                     if(id === 'sniper') icon = 'crosshairs';
@@ -338,6 +342,7 @@ const ui = {
             }
         }
     }
+};
 
 // --- 4. MAIN APP LOGIC ---
 const app = {
@@ -350,7 +355,7 @@ const app = {
     active: false,
 
     init: function() {
-        // Boot Sequence Simulation
+        // Boot Sequence
         setTimeout(() => { 
             document.getElementById('boot-screen').style.display = 'none'; 
             document.getElementById('main-app').classList.remove('hidden'); 
@@ -358,29 +363,26 @@ const app = {
             if(!store.data.name) ui.openModal('register'); 
         }, 2500);
 
-        // Initialize Audio on first click
+        // Audio Init
         document.body.addEventListener('click', () => sfx.init(), { once: true });
         
-        // Auto Update UI (Mining ticker)
+        // Auto Update Loop (30s)
         setInterval(() => ui.updateAll(), 30000); 
 
-        // PWA Install Handler
+        // PWA Install Prompt
         window.addEventListener('beforeinstallprompt', (e) => {
             e.preventDefault();
             deferredPrompt = e;
-            // Show Install Button in Settings
             const installBtn = document.getElementById('install-container');
             if(installBtn) installBtn.style.display = 'flex';
         });
 
-        // Bind Install Button
+        // Install Button Action
         const btnInstall = document.getElementById('btn-install');
         if(btnInstall) {
             btnInstall.addEventListener('click', async () => {
                 if (deferredPrompt) {
                     deferredPrompt.prompt();
-                    const { outcome } = await deferredPrompt.userChoice;
-                    console.log(`User response to the install prompt: ${outcome}`);
                     deferredPrompt = null;
                 }
             });
@@ -412,23 +414,21 @@ const app = {
         }
         
         if(!list || list.length === 0) { 
-            alert("DATABASE ERROR: No questions found. Please check questions.js"); 
+            alert("DATABASE ERROR: No questions found."); 
             return; 
         }
         
-        // BREACH MODE LOGIC (Active every 5th level)
+        // BREACH MODE LOGIC
         this.isBreach = (store.data.level % 5 === 0 && store.data.level > 0);
         
-        // Select random questions (5 for Breach, 10 for Normal)
         const qCount = this.isBreach ? 5 : 10;
         this.qs = list.sort(() => Math.random() - 0.5).slice(0, qCount);
         
         this.qIdx = 0; 
         this.score = 0; 
         this.active = true; 
-        store.data.stats.consecutive = 0; // Reset combo for new match
+        store.data.stats.consecutive = 0;
         
-        // UI Setup for Mode
         const screen = document.getElementById('game-screen');
         const overlay = document.getElementById('breach-overlay');
         
@@ -453,15 +453,10 @@ const app = {
         document.getElementById('q-total').innerText = this.qs.length;
         document.getElementById('question-text').innerText = q.question;
         
-        // Hide Combo initially
         document.getElementById('combo-display').classList.add('hidden');
 
-        // Render Options
         const cont = document.getElementById('options-container'); 
         cont.innerHTML = '';
-        
-        // Shuffle Options (Optional polish)
-        // const shuffledOptions = [...q.options].sort(() => Math.random() - 0.5);
         
         q.options.forEach(opt => {
             const btn = document.createElement('button'); 
@@ -484,17 +479,14 @@ const app = {
         store.data.stats.totalQ++;
 
         if(cor) {
-            // Correct Logic
             store.data.stats.correct++; 
             store.data.stats.consecutive++;
             
-            // Score Calculation with Combo Bonus
             let points = this.isBreach ? 20 : 10;
             let bonus = 0;
             
-            // Combo System
             if(store.data.stats.consecutive > 1) {
-                bonus = (store.data.stats.consecutive - 1) * 2; // +2, +4, +6...
+                bonus = (store.data.stats.consecutive - 1) * 2;
                 const comboEl = document.getElementById('combo-display');
                 comboEl.innerText = `COMBO x${store.data.stats.consecutive} (+${bonus})`;
                 comboEl.classList.remove('hidden');
@@ -505,19 +497,16 @@ const app = {
             sfx.correct();
 
         } else {
-            // Wrong Logic
             store.data.stats.wrong++; 
             store.data.stats.consecutive = 0;
             btn.classList.add('wrong'); 
             sfx.wrong();
             
-            // Show Correct Answer
             const opts = document.querySelectorAll('.option-btn');
             opts.forEach(b => {
                 if(b.innerText === currentQ.answer) b.classList.add('correct');
             });
 
-            // Breach Fail Condition (Instant Game Over)
             if(this.isBreach) { 
                 setTimeout(() => {
                     alert("SECURITY BREACH FAILED! SYSTEM LOCKED."); 
@@ -534,15 +523,12 @@ const app = {
         clearInterval(this.timer); 
         this.timeLeft = 100;
         const bar = document.getElementById('timer-bar');
-        
-        // Breach mode is 1.5x faster
         const speed = this.isBreach ? 60 : 100; 
         
         this.timer = setInterval(() => {
             this.timeLeft -= 1; 
             bar.style.width = this.timeLeft + '%';
             
-            // Color change on low time
             if(this.timeLeft < 30) bar.style.backgroundColor = 'red';
             else bar.style.backgroundColor = 'var(--secondary-color)';
             
@@ -554,7 +540,6 @@ const app = {
                     alert("TIME OUT! BREACH FAILED."); 
                     this.endGame(); 
                 } else { 
-                    // Mark as wrong and move on
                     store.data.stats.wrong++;
                     store.data.stats.consecutive = 0;
                     this.qIdx++; 
@@ -586,10 +571,9 @@ const app = {
                 const opts = Array.from(document.querySelectorAll('.option-btn'));
                 let removed = 0;
                 
-                // Hide 2 wrong options
                 opts.forEach(o => { 
                     if(o.innerText !== ans && removed < 2) { 
-                        o.style.visibility = 'hidden'; // Don't remove logic, just hide
+                        o.style.visibility = 'hidden';
                         removed++; 
                     }
                 });
@@ -607,11 +591,8 @@ const app = {
         store.data.stats.matches++;
         store.addXP(this.score);
         
-        // Result Screen UI
         document.getElementById('final-score').innerText = this.score;
-        document.getElementById('res-correct').innerText = store.data.stats.correct; // Total Lifetime correct? Or current session?
-        // Note: Currently UI shows total lifetime correct.
-        // If you want session correct, we need a local variable. But lifetime is fine for "Stats".
+        document.getElementById('res-correct').innerText = store.data.stats.correct;
         
         document.getElementById('game-screen').classList.remove('breach-mode');
         ui.showScreen('result');
@@ -628,10 +609,10 @@ const app = {
 
     shareScore: function() {
         const rank = document.getElementById('p-rank').innerText;
-        const t = `MISSION REPORT:\nAgent ${store.data.name} scored ${this.score} BITS in TRY v5.0!\nRank: ${rank}\nCan you hack the system?`;
+        const t = `MISSION REPORT:\nAgent ${store.data.name} scored ${this.score} BITS in TRY v5.1!\nRank: ${rank}\nCan you hack the system?`;
         
         if(navigator.share) {
-            navigator.share({ title: 'TRY System v5.0', text: t, url: window.location.href });
+            navigator.share({ title: 'TRY System v5.1', text: t, url: window.location.href });
         } else { 
             navigator.clipboard.writeText(t); 
             alert("Report copied to clipboard!"); 
@@ -650,7 +631,6 @@ const app = {
         const list = document.getElementById('leaderboard-list'); 
         list.innerHTML = '';
         
-        // Dummy Data + User Data
         const ranks = [
             {name: "VampireSquad", xp: 15000}, 
             {name: "AI_Ghost", xp: 8500}, 
