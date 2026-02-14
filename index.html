@@ -12,7 +12,11 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self' https: data: blob: 'unsafe-inline'">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self';
+img-src 'self' data: https:;
+style-src 'self' 'unsafe-inline' https:;
+script-src 'self' 'unsafe-inline' https:;
+font-src 'self' https: data:;">
     <link rel="icon" type="image/png" href="assets/icons/icon-192.png">
     <link rel="shortcut icon" href="assets/icons/icon-192.png">
     <link rel="apple-touch-icon" href="assets/icons/icon-192.png">
@@ -25,7 +29,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;700;900&family=Share+Tech+Mono&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="preload" as="style" href="css/style.css">
+<link rel="preload" as="style" href="css/style.css?v=5.1">
     <link rel="stylesheet" href="css/style.css?v=5.1">
     <link rel="stylesheet" href="css/responsive.css?v=5.1">
 </head>
