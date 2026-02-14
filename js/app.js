@@ -274,30 +274,70 @@ const ui = {
     updateAll: function() {
         const safe = (id, val) => { const el = document.getElementById(id); if(el) el.innerText = val; };
         
-        // Header Stats
+        // --- BASIC STATS ---
         safe('user-points', store.data.xp); 
         safe('current-level', store.data.level); 
         safe('player-name-display', store.data.name || "Agent");
-        
-        // Shop & Mining Stats
         safe('shop-balance', store.data.xp); 
-        safe('mining-rate-display', store.data.mining.rate);
-        safe('mining-rate-modal', store.data.mining.rate); 
+        
+        // --- MINING LIVE UI (NEW) ---
+        const mRate = store.data.mining.rate;
+        safe('mining-rate-display', mRate);
+        safe('mining-rate-modal', mRate); 
         safe('mining-pending', store.calculateMining());
+
+        const mStatus = document.getElementById('mining-status');
+        const mAnim = document.getElementById('mining-live-anim');
+        
+        if (mRate > 0) {
+            if(mStatus) { mStatus.innerText = "ONLINE"; mStatus.className = "status-online"; }
+            if(mAnim) mAnim.classList.remove('hidden');
+        } else {
+            if(mStatus) { mStatus.innerText = "OFFLINE"; mStatus.className = "status-offline"; }
+            if(mAnim) mAnim.classList.add('hidden');
+        }
+
+        // --- INVENTORY ---
         safe('qty-5050', store.data.inventory['5050'] || 0); 
         safe('qty-skip', store.data.inventory['skip'] || 0);
         
-        // Profile Stats
-        safe('p-name', store.data.name); 
-        safe('p-xp', store.data.xp);
+        // --- DETAILED PROFILE UI (NEW) ---
+        safe('p-name', store.data.name || "Unknown"); 
+        safe('p-age', store.data.age || "--");
         safe('p-rank', this.getRank(store.data.level));
+        
+        safe('p-correct', store.data.stats.correct);
+        safe('p-wrong', store.data.stats.wrong);
+        safe('p-mined', store.data.stats.totalMined || 0); // Show Total Mined
         
         const total = store.data.stats.totalQ;
         const correct = store.data.stats.correct;
         const acc = total > 0 ? Math.round((correct / total)*100) : 0;
         safe('p-acc', acc + "%");
+
+        // --- BADGES IN PROFILE (NEW) ---
+        const badgeContainer = document.getElementById('p-badges-grid');
+        if (badgeContainer) {
+            badgeContainer.innerHTML = '';
+            if (store.data.achievements.length === 0) {
+                badgeContainer.innerHTML = '<span class="no-badge">No Intel Data</span>';
+            } else {
+                store.data.achievements.forEach(id => {
+                    // Find icon based on achievement ID
+                    let icon = 'medal'; // default
+                    if(id === 'richie') icon = 'gem';
+                    if(id === 'sniper') icon = 'crosshairs';
+                    if(id === 'miner') icon = 'hammer';
+                    if(id === 'hacker') icon = 'user-secret';
+                    
+                    const el = document.createElement('i');
+                    el.className = `fas fa-${icon} mini-badge`;
+                    el.title = id;
+                    badgeContainer.appendChild(el);
+                });
+            }
+        }
     }
-};
 
 // --- 4. MAIN APP LOGIC ---
 const app = {
