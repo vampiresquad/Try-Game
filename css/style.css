@@ -109,6 +109,7 @@ body::before {
     align-items: center;
     animation: fadeIn 0.5s ease-in-out;
     width: 100%;
+    padding-bottom: 40px; /* Space for footer */
 }
 
 .screen.active {
@@ -129,6 +130,7 @@ body::before {
     text-shadow: 2px 2px var(--secondary-color);
     letter-spacing: 5px;
     margin-bottom: 5px;
+    text-align: center;
 }
 
 .subtitle {
@@ -274,6 +276,7 @@ body::before {
 .game-hud {
     width: 100%;
     margin-bottom: 20px;
+    position: relative;
 }
 
 .progress-bar-container {
@@ -441,7 +444,7 @@ body::before {
     top: 0; left: 0; width: 100%; height: 100%;
     background: rgba(0, 0, 0, 0.85);
     backdrop-filter: blur(5px);
-    z-index: 100;
+    z-index: 1000; /* Increased z-index to be above CRT lines */
     display: flex;
     justify-content: center;
     align-items: center;
@@ -588,7 +591,7 @@ body::before {
     position: fixed;
     top: 0; left: 0; width: 100%; height: 100%;
     background: #000;
-    z-index: 999;
+    z-index: 9999;
     display: flex;
     justify-content: center;
     align-items: center;
@@ -622,7 +625,7 @@ body::before {
 /* --- FOOTER --- */
 .game-footer {
     position: absolute; bottom: 10px; width: 100%; text-align: center;
-    font-size: 0.7rem; color: #555; pointer-events: none;
+    font-size: 0.7rem; color: #555; pointer-events: none; z-index: 5;
 }
 .author-name { color: var(--primary-color); text-transform: uppercase; letter-spacing: 1px; }
 
@@ -630,6 +633,7 @@ body::before {
     from { transform: scale(0.8); opacity: 0; }
     to { transform: scale(1); opacity: 1; }
 }
+
 /* --- NEW PROFILE DESIGN --- */
 .profile-header-section {
     display: flex;
@@ -676,6 +680,8 @@ body::before {
 .stat-box.red { color: #f00; border-color: #f00; }
 .stat-box.gold { color: #ffd700; border-color: #ffd700; }
 .stat-box.cyan { color: #00f3ff; border-color: #00f3ff; }
+/* Added Blue Class for Games Played */
+.stat-box.blue { color: #0077ff; border-color: #0077ff; }
 
 /* Badge Grid */
 .profile-badges-section h4 { font-size: 0.8rem; color: #aaa; margin-bottom: 10px; text-align: left; }
