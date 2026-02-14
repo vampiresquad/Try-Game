@@ -30,7 +30,7 @@ const store = {
         { id: 'hacker', title: 'Elite Hacker', desc: 'Reach Level 10', reward: 500 }
     ],
 
-    // [UPDATED] Deep Merge Load to prevent data loss
+    // Deep Merge Load to prevent data loss
     load: function() {
         const saved = localStorage.getItem('try_v5_data');
         if (saved) {
@@ -87,7 +87,7 @@ const store = {
         this.save();
     },
 
-    // [UPDATED] Anti-Cheat Mining Calculation
+    // Anti-Cheat Mining Calculation
     calculateMining: function() {
         const now = Date.now();
         
@@ -366,6 +366,9 @@ const ui = {
         setVal('p-correct', store.data.stats.correct);
         setVal('p-wrong', store.data.stats.wrong);
         setVal('p-mined', store.data.stats.totalMined || 0);
+        
+        // [FIXED] Added Games Played Update
+        setVal('p-games', store.data.stats.matches);
 
         // Accuracy Calc
         const total = store.data.stats.totalQ;
@@ -584,8 +587,13 @@ const app = {
             this.timeLeft -= 1;
             bar.style.width = this.timeLeft + '%';
             
-            if(this.timeLeft < 30) bar.style.backgroundColor = 'var(--danger)';
-            else bar.style.backgroundColor = 'var(--primary)';
+            // [FIXED] Used correct CSS Variable names and fallback colors
+            if(this.timeLeft < 30) {
+                // Try theme variable, fallback to hex
+                bar.style.backgroundColor = 'var(--danger-color, #ff003c)';
+            } else {
+                bar.style.backgroundColor = 'var(--primary-color, #00f3ff)';
+            }
 
             if(this.timeLeft <= 0) {
                 clearInterval(this.timer);
@@ -700,11 +708,23 @@ const app = {
         }
     },
 
+    // [FIXED] Updated to toggle Button Text and Class correctly
     toggleSound: function() {
         store.data.settings.sound = !store.data.settings.sound;
         store.save();
-        const btn = document.querySelector('.fa-volume-up');
-        if(btn) btn.style.opacity = store.data.settings.sound ? "1" : "0.3";
+        
+        const btn = document.getElementById('btn-sound');
+        if(btn) {
+            if(store.data.settings.sound) {
+                btn.innerText = "ON";
+                btn.classList.add('on');
+                btn.classList.remove('off');
+            } else {
+                btn.innerText = "OFF";
+                btn.classList.add('off');
+                btn.classList.remove('on');
+            }
+        }
     },
     
     goHome: function() {
