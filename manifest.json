@@ -1,11 +1,14 @@
 {
   "name": "TRY - Ultimate System",
   "short_name": "TRY System",
-  "start_url": "index.html",
+  "description": "TRY Ultimate Hacker Quiz Game with Mining and Ranking System",
+  "start_url": "/index.html?source=pwa",
+  "scope": "/",
   "display": "standalone",
   "background_color": "#000000",
   "theme_color": "#00f3ff",
   "orientation": "portrait",
+  "categories": ["games", "education"],
   "icons": [
     {
       "src": "assets/icons/icon-192.png",
