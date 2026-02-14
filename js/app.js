@@ -36,8 +36,13 @@ const store = {
     load: function() {
         const saved = localStorage.getItem('try_v5_data');
         if (saved) {
-            const parsed = JSON.parse(saved);
-            this.data = { ...this.data, ...parsed }; // Merge to ensure new keys exist
+            try {
+    const parsed = JSON.parse(saved);
+    this.data = { ...this.data, ...parsed };
+} catch(e) {
+    console.log("Save Data Corrupted - Resetting");
+    localStorage.removeItem('try_v5_data');
+} // Merge to ensure new keys exist
             
             // Fix: Reset mining time if invalid
             if (!this.data.mining.lastClaim) this.data.mining.lastClaim = Date.now();
@@ -422,7 +427,12 @@ const app = {
         this.isBreach = (store.data.level % 5 === 0 && store.data.level > 0);
         
         const qCount = this.isBreach ? 5 : 10;
-        this.qs = list.sort(() => Math.random() - 0.5).slice(0, qCount);
+for (let i = list.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [list[i], list[j]] = [list[j], list[i]];
+}
+
+this.qs = list.slice(0, qCount);
         
         this.qIdx = 0; 
         this.score = 0; 
@@ -520,7 +530,7 @@ const app = {
     },
 
     startTimer: function() {
-        clearInterval(this.timer); 
+        if (this.timer) clearInterval(this.timer);
         this.timeLeft = 100;
         const bar = document.getElementById('timer-bar');
         const speed = this.isBreach ? 60 : 100; 
@@ -586,7 +596,10 @@ const app = {
 
     endGame: function() {
         this.active = false; 
-        clearInterval(this.timer);
+if (this.timer) {
+    clearInterval(this.timer);
+    this.timer = null;
+}
         
         store.data.stats.matches++;
         store.addXP(this.score);
