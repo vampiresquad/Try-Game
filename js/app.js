@@ -1,29 +1,27 @@
-/* TRY - ULTIMATE QUIZ SYSTEM ENGINE v5.1
-   Developed by Muhammad Shourov
-   Features: PWA, Live Mining, Advanced Profile, Themes, Breach Mode, Achievements
-   Status: STABLE & OPTIMIZED
+/* TRY - ULTIMATE QUIZ SYSTEM ENGINE v5.2 (Optimized)
+   Developed by: Muhammad Shourov
+   Status: STABLE, SECURE & MOBILE READY
 */
 
-// --- PWA INSTALLATION VARIABLE ---
-let deferredPrompt;
+// --- 0. GLOBAL VARIABLES ---
+let deferredPrompt; // PWA Install Prompt
 
 // --- 1. DATA STORE (The Brain) ---
 const store = {
+    // Default State
     data: {
-        name: null, 
-        age: null, 
-        xp: 0, 
+        name: null,
+        age: null,
+        xp: 0,
         level: 1,
         inventory: { '5050': 2, 'skip': 2 },
-        mining: { rate: 0, lastClaim: Date.now() },
+        mining: { rate: 5, lastClaim: Date.now() }, // Default rate 5
         themes: { current: 'cyan', owned: ['cyan'] },
-        // Updated Stats to track Total Mined
         stats: { matches: 0, totalQ: 0, correct: 0, wrong: 0, consecutive: 0, totalMined: 0 },
-        achievements: [], // List of unlocked IDs
+        achievements: [],
         settings: { sound: true }
     },
-    
-    // Achievement Definitions
+
     achievList: [
         { id: 'first_win', title: 'First Blood', desc: 'Complete your first match', reward: 50 },
         { id: 'richie', title: 'Richie Rich', desc: 'Accumulate 1000 BITS', reward: 100 },
@@ -32,58 +30,73 @@ const store = {
         { id: 'hacker', title: 'Elite Hacker', desc: 'Reach Level 10', reward: 500 }
     ],
 
-    // Load Data from LocalStorage
+    // [UPDATED] Deep Merge Load to prevent data loss
     load: function() {
         const saved = localStorage.getItem('try_v5_data');
         if (saved) {
             try {
-    const parsed = JSON.parse(saved);
-    this.data = { ...this.data, ...parsed };
-} catch(e) {
-    console.log("Save Data Corrupted - Resetting");
-    localStorage.removeItem('try_v5_data');
-} // Merge to ensure new keys exist
-            
-            // Fix: Reset mining time if invalid
-            if (!this.data.mining.lastClaim) this.data.mining.lastClaim = Date.now();
-            // Fix: Ensure totalMined exists for old users
-            if (!this.data.stats.totalMined) this.data.stats.totalMined = 0;
+                const parsed = JSON.parse(saved);
+                
+                // Merge top-level data
+                this.data = { ...this.data, ...parsed };
+
+                // Deep Merge nested objects (Crucial for updates)
+                this.data.stats = { ...store.data.stats, ...(parsed.stats || {}) };
+                this.data.inventory = { ...store.data.inventory, ...(parsed.inventory || {}) };
+                this.data.mining = { ...store.data.mining, ...(parsed.mining || {}) };
+                this.data.themes = { ...store.data.themes, ...(parsed.themes || {}) };
+                this.data.settings = { ...store.data.settings, ...(parsed.settings || {}) };
+
+            } catch (e) {
+                console.error("Save File Corrupted. Resetting to defaults.");
+            }
         }
+        
+        // Safety Check: Ensure valid timestamp
+        if (!this.data.mining.lastClaim) this.data.mining.lastClaim = Date.now();
+        
+        // Apply Visuals
         this.applyTheme(this.data.themes.current);
     },
 
-    // Save Data to LocalStorage
     save: function() {
         localStorage.setItem('try_v5_data', JSON.stringify(this.data));
         ui.updateAll();
     },
 
     register: function(name, age) {
-        this.data.name = name; 
+        this.data.name = name;
         this.data.age = age;
         this.save();
     },
 
-    // --- ECONOMY & MINING SYSTEM ---
+    // --- ECONOMY SYSTEM ---
     addXP: function(amount) {
         this.data.xp += amount;
-        // Level Calculation: Level increases every 100 XP
-        const newLevel = Math.floor(this.data.xp / 100) + 1;
+        
+        // Level logic: 1 Level per 500 XP
+        const newLevel = Math.floor(this.data.xp / 500) + 1; 
         
         if (newLevel > this.data.level) {
             this.data.level = newLevel;
-            sfx.correct(); // Level up sound
+            sfx.play('correct'); 
             alert(`SYSTEM UPGRADE: LEVEL ${newLevel} REACHED!`);
-        } else {
-            this.data.level = newLevel;
         }
-
+        
         this.checkAchievements();
         this.save();
     },
 
+    // [UPDATED] Anti-Cheat Mining Calculation
     calculateMining: function() {
         const now = Date.now();
+        
+        // Security Check: If user changed phone time to future
+        if (this.data.mining.lastClaim > now) {
+            this.data.mining.lastClaim = now; // Reset timestamp
+            return 0;
+        }
+
         const diffMs = now - this.data.mining.lastClaim;
         const hours = diffMs / (1000 * 60 * 60);
         return Math.floor(hours * this.data.mining.rate);
@@ -94,16 +107,15 @@ const store = {
         if (amount > 0) {
             this.addXP(amount);
             
-            // Track Total Mined Stats
             if (!this.data.stats.totalMined) this.data.stats.totalMined = 0;
             this.data.stats.totalMined += amount;
-
+            
             this.data.mining.lastClaim = Date.now();
             this.save();
-            sfx.correct();
+            sfx.play('correct');
             alert(`SUCCESS: Extracted ${amount} BITS from network!`);
         } else {
-            alert("MINING IN PROGRESS... Mining pool is empty.");
+            alert("MINING IN PROGRESS... Pool is currently empty.");
         }
     },
 
@@ -111,12 +123,14 @@ const store = {
         const cost = 500;
         if (this.data.xp >= cost) {
             this.data.xp -= cost;
-            this.data.mining.rate += 10; // Increase rate by 10
+            this.data.mining.rate += 10;
             this.unlockAchievement('miner');
             this.save();
-            sfx.correct();
+            sfx.play('correct');
             alert(`UPGRADE COMPLETE: Rate increased to ${this.data.mining.rate} BITS/H`);
-        } else alert(`ACCESS DENIED: Insufficient BITS. Need ${cost}.`);
+        } else {
+            alert(`ACCESS DENIED: Insufficient BITS. Need ${cost}.`);
+        }
     },
 
     // --- SHOP SYSTEM ---
@@ -126,10 +140,10 @@ const store = {
             if (!this.data.inventory[type]) this.data.inventory[type] = 0;
             this.data.inventory[type]++;
             this.save();
-            sfx.click();
+            sfx.play('click');
             alert(`TRANSACTION SUCCESSFUL: Added 1x ${type.toUpperCase()}`);
         } else {
-            sfx.wrong();
+            sfx.play('wrong');
             alert("TRANSACTION FAILED: Insufficient Funds.");
         }
     },
@@ -146,9 +160,11 @@ const store = {
             this.data.themes.current = theme;
             this.applyTheme(theme);
             this.save();
-            sfx.correct();
+            sfx.play('correct');
             alert("NEW THEME ACQUIRED & ACTIVATED!");
-        } else alert("ACCESS DENIED: Insufficient BITS.");
+        } else {
+            alert("ACCESS DENIED: Insufficient BITS.");
+        }
     },
 
     applyTheme: function(theme) {
@@ -170,100 +186,135 @@ const store = {
             if(ach) {
                 this.data.xp += ach.reward;
                 this.save();
-                sfx.correct();
+                sfx.play('correct');
                 setTimeout(() => {
                     alert(`🏆 MEDAL UNLOCKED: ${ach.title}\nReward: ${ach.reward} BITS`);
                 }, 500);
             }
         }
     },
-    
-    // --- RESET ---
+
     resetData: function() {
-        if(confirm("WARNING: PERFORMING FACTORY RESET.\nAll progress will be lost. Proceed?")) { 
-            localStorage.removeItem('try_v5_data'); 
-            location.reload(); 
+        if(confirm("WARNING: PERFORMING FACTORY RESET.\nAll progress will be lost. Proceed?")) {
+            localStorage.removeItem('try_v5_data');
+            location.reload();
         }
     }
 };
 
-// --- 2. SOUND ENGINE (SFX) ---
+// --- 2. SOUND ENGINE (SFX - Mobile Optimized) ---
 const sfx = {
     ctx: null,
-    init: function() { 
+    
+    init: function() {
         if(store.data.settings.sound && !this.ctx) {
-            this.ctx = new (window.AudioContext || window.webkitAudioContext)(); 
+            const AudioContext = window.AudioContext || window.webkitAudioContext;
+            if (AudioContext) {
+                this.ctx = new AudioContext();
+            }
         }
     },
-    tone: function(f, t, d) {
-        if(!store.data.settings.sound || !this.ctx) { this.init(); return; }
+
+    play: function(type) {
+        if(!store.data.settings.sound) return;
+        
+        // Mobile Fix: Resume context if suspended
+        if (this.ctx && this.ctx.state === 'suspended') {
+            this.ctx.resume();
+        }
+        
+        if(!this.ctx) { this.init(); return; }
+
         try {
             const o = this.ctx.createOscillator();
             const g = this.ctx.createGain();
-            o.type = t; 
-            o.frequency.setValueAtTime(f, this.ctx.currentTime);
-            g.gain.setValueAtTime(0.05, this.ctx.currentTime); 
-            g.gain.exponentialRampToValueAtTime(0.0001, this.ctx.currentTime+d);
-            o.connect(g); 
-            g.connect(this.ctx.destination); 
-            o.start(); 
-            o.stop(this.ctx.currentTime+d);
-        } catch(e) { console.log("Audio Error", e); }
-    },
-    click: () => { sfx.tone(800, 'square', 0.05); navigator.vibrate?.(10); },
-    correct: () => { 
-        sfx.tone(600, 'sine', 0.1); 
-        setTimeout(() => sfx.tone(1200, 'sine', 0.2), 100); 
-        navigator.vibrate?.([50,50]); 
-    },
-    wrong: () => { sfx.tone(150, 'sawtooth', 0.3); navigator.vibrate?.(200); },
-    alarm: () => { 
-        sfx.tone(800, 'sawtooth', 0.5); 
-        setTimeout(() => sfx.tone(600, 'sawtooth', 0.5), 500); 
+            const now = this.ctx.currentTime;
+
+            // Tone Configuration
+            if (type === 'click') {
+                o.type = 'square';
+                o.frequency.setValueAtTime(800, now);
+                g.gain.setValueAtTime(0.05, now);
+                o.start(); o.stop(now + 0.05);
+                navigator.vibrate?.(10);
+            } 
+            else if (type === 'correct') {
+                o.type = 'sine';
+                o.frequency.setValueAtTime(600, now);
+                o.frequency.linearRampToValueAtTime(1200, now + 0.1);
+                g.gain.setValueAtTime(0.1, now);
+                g.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
+                o.start(); o.stop(now + 0.3);
+                navigator.vibrate?.([50, 50]);
+            } 
+            else if (type === 'wrong') {
+                o.type = 'sawtooth';
+                o.frequency.setValueAtTime(150, now);
+                g.gain.setValueAtTime(0.2, now);
+                g.gain.exponentialRampToValueAtTime(0.01, now + 0.4);
+                o.start(); o.stop(now + 0.4);
+                navigator.vibrate?.(200);
+            }
+            else if (type === 'alarm') {
+                o.type = 'sawtooth';
+                o.frequency.setValueAtTime(800, now);
+                o.frequency.linearRampToValueAtTime(600, now + 0.5);
+                g.gain.setValueAtTime(0.2, now);
+                o.start(); o.stop(now + 0.5);
+            }
+            
+            o.connect(g);
+            g.connect(this.ctx.destination);
+            
+        } catch(e) { console.warn("Audio Error:", e); }
     }
 };
 
-// --- 3. UI CONTROLLER (UPDATED) ---
+// --- 3. UI CONTROLLER ---
 const ui = {
-    screens: { 
-        home: document.getElementById('home-screen'), 
-        category: document.getElementById('category-screen'), 
-        game: document.getElementById('game-screen'), 
-        result: document.getElementById('result-screen') 
+    screens: {
+        home: document.getElementById('home-screen'),
+        category: document.getElementById('category-screen'),
+        game: document.getElementById('game-screen'),
+        result: document.getElementById('result-screen')
     },
-    
+
     showScreen: function(name) {
-        Object.values(this.screens).forEach(s => { 
-            s.classList.remove('active'); 
-            s.classList.add('hidden'); 
+        Object.values(this.screens).forEach(s => {
+            s.classList.remove('active');
+            s.classList.add('hidden');
         });
-        this.screens[name].classList.remove('hidden'); 
-        this.screens[name].classList.add('active');
+        const target = this.screens[name];
+        if (target) {
+            target.classList.remove('hidden');
+            setTimeout(() => target.classList.add('active'), 10);
+        }
     },
 
     openModal: function(type) {
-        sfx.click();
-        document.getElementById('modal-overlay').classList.remove('hidden');
+        sfx.play('click');
+        const overlay = document.getElementById('modal-overlay');
+        overlay.classList.remove('hidden');
+        
         document.querySelectorAll('.modal-box').forEach(b => b.classList.add('hidden'));
         document.getElementById(`modal-${type}`).classList.remove('hidden');
-        
+
+        // Dynamic Content Loading
         if (type === 'leaderboard') app.genLeaderboard();
         if (type === 'achievements') app.genAchievements();
-        
+
+        // Lock overlay for registration
         if (type === 'register') {
-            document.getElementById('modal-overlay').onclick = null;
+            overlay.onclick = null;
         } else {
-            document.getElementById('modal-overlay').onclick = (e) => { 
-                if(e.target.id === 'modal-overlay') ui.closeModal(); 
-            };
+            overlay.onclick = (e) => { if(e.target === overlay) ui.closeModal(); };
         }
-        
         ui.updateAll();
     },
 
-    closeModal: function() { 
-        sfx.click(); 
-        document.getElementById('modal-overlay').classList.add('hidden'); 
+    closeModal: function() {
+        sfx.play('click');
+        document.getElementById('modal-overlay').classList.add('hidden');
     },
 
     switchShopTab: function(tab) {
@@ -280,172 +331,156 @@ const ui = {
         return "Elite Phantom";
     },
 
-    // --- CENTRAL UI UPDATE FUNCTION ---
+    // Central UI Update Loop
     updateAll: function() {
-        const safe = (id, val) => { const el = document.getElementById(id); if(el) el.innerText = val; };
-        
-        // Basic Stats
-        safe('user-points', store.data.xp); 
-        safe('current-level', store.data.level); 
-        safe('player-name-display', store.data.name || "Agent");
-        safe('shop-balance', store.data.xp); 
-        
-        // --- LIVE MINING UI ---
+        const setVal = (id, val) => { 
+            const el = document.getElementById(id); 
+            if(el) el.innerText = val; 
+        };
+
+        // Header Stats
+        setVal('user-points', store.data.xp);
+        setVal('current-level', store.data.level);
+        setVal('player-name-display', store.data.name || "Agent");
+        setVal('shop-balance', store.data.xp);
+
+        // Mining Display
         const mRate = store.data.mining.rate;
-        safe('mining-rate-display', mRate);
-        safe('mining-rate-modal', mRate); 
-        safe('mining-pending', store.calculateMining());
+        setVal('mining-rate-display', mRate);
+        setVal('mining-rate-modal', mRate);
+        setVal('mining-pending', store.calculateMining());
 
         const mStatus = document.getElementById('mining-status');
         const mAnim = document.getElementById('mining-live-anim');
-        
-        if (mRate > 0) {
-            if(mStatus) { mStatus.innerText = "ONLINE"; mStatus.className = "status-online"; }
-            if(mAnim) mAnim.classList.remove('hidden');
-        } else {
-            if(mStatus) { mStatus.innerText = "OFFLINE"; mStatus.className = "status-offline"; }
-            if(mAnim) mAnim.classList.add('hidden');
-        }
+        if(mStatus) mStatus.innerText = (mRate > 0) ? "ONLINE" : "OFFLINE";
+        if(mAnim) (mRate > 0) ? mAnim.classList.remove('hidden') : mAnim.classList.add('hidden');
 
         // Inventory
-        safe('qty-5050', store.data.inventory['5050'] || 0); 
-        safe('qty-skip', store.data.inventory['skip'] || 0);
-        
-        // --- DETAILED PROFILE UI ---
-        safe('p-name', store.data.name || "Unknown"); 
-        safe('p-age', store.data.age || "--");
-        safe('p-rank', this.getRank(store.data.level));
-        
-        safe('p-correct', store.data.stats.correct);
-        safe('p-wrong', store.data.stats.wrong);
-        safe('p-mined', store.data.stats.totalMined || 0); // Show Total Mined
-        
+        setVal('qty-5050', store.data.inventory['5050'] || 0);
+        setVal('qty-skip', store.data.inventory['skip'] || 0);
+
+        // Profile Stats
+        setVal('p-name', store.data.name || "Unknown");
+        setVal('p-age', store.data.age || "--");
+        setVal('p-rank', this.getRank(store.data.level));
+        setVal('p-correct', store.data.stats.correct);
+        setVal('p-wrong', store.data.stats.wrong);
+        setVal('p-mined', store.data.stats.totalMined || 0);
+
+        // Accuracy Calc
         const total = store.data.stats.totalQ;
         const correct = store.data.stats.correct;
         const acc = total > 0 ? Math.round((correct / total)*100) : 0;
-        safe('p-acc', acc + "%");
+        setVal('p-acc', acc + "%");
 
-        // --- BADGES IN PROFILE ---
+        // Render Badges
         const badgeContainer = document.getElementById('p-badges-grid');
         if (badgeContainer) {
             badgeContainer.innerHTML = '';
             if (store.data.achievements.length === 0) {
-                badgeContainer.innerHTML = '<span class="no-badge">No Intel Data</span>';
+                badgeContainer.innerHTML = '<span style="color:#444; font-size:0.7rem;">NO DATA</span>';
             } else {
                 store.data.achievements.forEach(id => {
-                    let icon = 'medal'; // default
+                    let icon = 'medal';
                     if(id === 'richie') icon = 'gem';
                     if(id === 'sniper') icon = 'crosshairs';
                     if(id === 'miner') icon = 'hammer';
                     if(id === 'hacker') icon = 'user-secret';
                     
-                    const el = document.createElement('i');
-                    el.className = `fas fa-${icon} mini-badge`;
-                    el.title = id;
-                    badgeContainer.appendChild(el);
+                    const i = document.createElement('i');
+                    i.className = `fas fa-${icon} mini-badge`;
+                    i.title = id;
+                    badgeContainer.appendChild(i);
                 });
             }
         }
     }
 };
 
-// --- 4. MAIN APP LOGIC ---
+// --- 4. MAIN APP CONTROLLER ---
 const app = {
     qs: [], 
     qIdx: 0, 
     score: 0, 
     timer: null, 
-    timeLeft: 100, 
+    timeLeft: 100,
     isBreach: false, 
     active: false,
 
     init: function() {
         // Boot Sequence
-        setTimeout(() => { 
-            document.getElementById('boot-screen').style.display = 'none'; 
-            document.getElementById('main-app').classList.remove('hidden'); 
-            store.load(); 
-            if(!store.data.name) ui.openModal('register'); 
-        }, 2500);
+        setTimeout(() => {
+            const boot = document.getElementById('boot-screen');
+            if(boot) boot.style.display = 'none';
+            document.getElementById('main-app').classList.remove('hidden');
+            store.load();
+            if(!store.data.name) ui.openModal('register');
+        }, 2000);
 
-        // Audio Init
+        // Audio Initialization (First Interaction)
         document.body.addEventListener('click', () => sfx.init(), { once: true });
-        
-        // Auto Update Loop (30s)
+        document.body.addEventListener('touchstart', () => sfx.init(), { once: true });
+
+        // Auto Update UI Loop (Every 30s)
         setInterval(() => ui.updateAll(), 30000); 
 
-        // PWA Install Prompt
+        // PWA Install Handler
         window.addEventListener('beforeinstallprompt', (e) => {
             e.preventDefault();
             deferredPrompt = e;
-            const installBtn = document.getElementById('install-container');
-            if(installBtn) installBtn.style.display = 'flex';
         });
-
-        // Install Button Action
-        const btnInstall = document.getElementById('btn-install');
-        if(btnInstall) {
-            btnInstall.addEventListener('click', async () => {
-                if (deferredPrompt) {
-                    deferredPrompt.prompt();
-                    deferredPrompt = null;
-                }
-            });
-        }
     },
 
     registerUser: function() {
         const name = document.getElementById('reg-name').value.trim();
         const age = document.getElementById('reg-age').value.trim();
-        if(name.length >= 3 && age > 0) { 
-            store.register(name, age); 
-            ui.closeModal(); 
-            sfx.correct();
-        } else alert("ERROR: Name must be 3+ chars & valid age.");
+        if(name.length >= 3 && age > 0) {
+            store.register(name, age);
+            ui.closeModal();
+            sfx.play('correct');
+        } else {
+            alert("ERROR: Name must be 3+ chars & valid age.");
+        }
     },
 
-    showCategorySelection: function() { 
-        sfx.click(); 
-        ui.showScreen('category'); 
+    showCategorySelection: function() {
+        sfx.play('click');
+        ui.showScreen('category');
     },
 
     startGame: function(cat) {
-        sfx.click();
-        
-        // Fetch Questions
+        sfx.play('click');
         let list = [];
+        
+        // Check if Question Bank exists
         if (window.questionBank) {
             list = (cat === 'mixed') ? window.questionBank : window.questionBank.filter(q => q.category === cat);
         }
-        
-        if(!list || list.length === 0) { 
-            alert("DATABASE ERROR: No questions found."); 
-            return; 
-        }
-        
-        // BREACH MODE LOGIC
-        this.isBreach = (store.data.level % 5 === 0 && store.data.level > 0);
-        
-        const qCount = this.isBreach ? 5 : 10;
-for (let i = list.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [list[i], list[j]] = [list[j], list[i]];
-}
 
-this.qs = list.slice(0, qCount);
-        
-        this.qIdx = 0; 
-        this.score = 0; 
-        this.active = true; 
+        if(!list || list.length === 0) {
+            alert("DATABASE ERROR: No questions found.");
+            return;
+        }
+
+        // Logic: Breach Mode every 5th Level
+        this.isBreach = (store.data.level % 5 === 0 && store.data.level > 0);
+        const qCount = this.isBreach ? 5 : 10;
+
+        // Shuffle & Slice
+        this.qs = [...list].sort(() => Math.random() - 0.5).slice(0, qCount);
+        this.qIdx = 0;
+        this.score = 0;
+        this.active = true;
         store.data.stats.consecutive = 0;
-        
+
+        // Breach Visuals
         const screen = document.getElementById('game-screen');
         const overlay = document.getElementById('breach-overlay');
         
         if (this.isBreach) {
             screen.classList.add('breach-mode');
             overlay.classList.remove('hidden');
-            sfx.alarm();
+            sfx.play('alarm');
         } else {
             screen.classList.remove('breach-mode');
             overlay.classList.add('hidden');
@@ -456,45 +491,51 @@ this.qs = list.slice(0, qCount);
     },
 
     loadQ: function() {
-        if (this.qIdx >= this.qs.length) { this.endGame(); return; }
-        
+        if (this.qIdx >= this.qs.length) {
+            this.endGame();
+            return;
+        }
+
         const q = this.qs[this.qIdx];
+        
+        // Update Game UI
         document.getElementById('q-current').innerText = this.qIdx + 1;
         document.getElementById('q-total').innerText = this.qs.length;
         document.getElementById('question-text').innerText = q.question;
-        
         document.getElementById('combo-display').classList.add('hidden');
 
-        const cont = document.getElementById('options-container'); 
+        // Render Options
+        const cont = document.getElementById('options-container');
         cont.innerHTML = '';
         
         q.options.forEach(opt => {
-            const btn = document.createElement('button'); 
-            btn.className = 'option-btn'; 
+            const btn = document.createElement('button');
+            btn.className = 'option-btn';
             btn.innerText = opt;
-            btn.onclick = () => this.handle(opt, btn); 
+            btn.onclick = () => this.handle(opt, btn);
             cont.appendChild(btn);
         });
-        
+
         this.startTimer();
     },
 
     handle: function(sel, btn) {
-        if(!this.active) return; 
+        if(!this.active) return;
         clearInterval(this.timer);
-        
+
         const currentQ = this.qs[this.qIdx];
-        const cor = currentQ.answer === sel;
-        
+        const isCorrect = currentQ.answer === sel;
         store.data.stats.totalQ++;
 
-        if(cor) {
-            store.data.stats.correct++; 
+        if(isCorrect) {
+            store.data.stats.correct++;
             store.data.stats.consecutive++;
             
+            // Score Calculation
             let points = this.isBreach ? 20 : 10;
             let bonus = 0;
             
+            // Combo Logic
             if(store.data.stats.consecutive > 1) {
                 bonus = (store.data.stats.consecutive - 1) * 2;
                 const comboEl = document.getElementById('combo-display');
@@ -503,88 +544,90 @@ this.qs = list.slice(0, qCount);
             }
             
             this.score += (points + bonus);
-            btn.classList.add('correct'); 
-            sfx.correct();
-
+            btn.classList.add('correct');
+            sfx.play('correct');
         } else {
-            store.data.stats.wrong++; 
+            store.data.stats.wrong++;
             store.data.stats.consecutive = 0;
-            btn.classList.add('wrong'); 
-            sfx.wrong();
-            
+            btn.classList.add('wrong');
+            sfx.play('wrong');
+
+            // Show Correct Answer
             const opts = document.querySelectorAll('.option-btn');
             opts.forEach(b => {
                 if(b.innerText === currentQ.answer) b.classList.add('correct');
             });
 
-            if(this.isBreach) { 
+            // Breach Mode Penalty
+            if(this.isBreach) {
                 setTimeout(() => {
-                    alert("SECURITY BREACH FAILED! SYSTEM LOCKED."); 
-                    this.endGame(); 
+                    alert("SECURITY BREACH FAILED! SYSTEM LOCKED.");
+                    this.endGame();
                 }, 500);
-                return; 
+                return;
             }
         }
-        
-        setTimeout(() => { this.qIdx++; this.loadQ(); }, 1500);
+
+        setTimeout(() => {
+            this.qIdx++;
+            this.loadQ();
+        }, 1500);
     },
 
     startTimer: function() {
-        if (this.timer) clearInterval(this.timer);
+        clearInterval(this.timer);
         this.timeLeft = 100;
         const bar = document.getElementById('timer-bar');
-        const speed = this.isBreach ? 60 : 100; 
-        
+        const speed = this.isBreach ? 60 : 100; // Faster drain in Breach Mode
+
         this.timer = setInterval(() => {
-            this.timeLeft -= 1; 
+            this.timeLeft -= 1;
             bar.style.width = this.timeLeft + '%';
             
-            if(this.timeLeft < 30) bar.style.backgroundColor = 'red';
-            else bar.style.backgroundColor = 'var(--secondary-color)';
-            
+            if(this.timeLeft < 30) bar.style.backgroundColor = 'var(--danger)';
+            else bar.style.backgroundColor = 'var(--primary)';
+
             if(this.timeLeft <= 0) {
-                clearInterval(this.timer); 
-                sfx.wrong();
+                clearInterval(this.timer);
+                sfx.play('wrong');
                 
-                if(this.isBreach) { 
-                    alert("TIME OUT! BREACH FAILED."); 
-                    this.endGame(); 
-                } else { 
+                if(this.isBreach) {
+                    alert("TIME OUT! BREACH FAILED.");
+                    this.endGame();
+                } else {
                     store.data.stats.wrong++;
                     store.data.stats.consecutive = 0;
-                    this.qIdx++; 
-                    this.loadQ(); 
+                    this.qIdx++;
+                    this.loadQ();
                 }
             }
         }, speed);
     },
 
     useLifeline: function(type) {
-        if(this.isBreach) { 
-            sfx.wrong();
-            alert("SYSTEM ERROR: Lifelines disabled in Breach Mode!"); 
-            return; 
-        } 
-        
+        if(this.isBreach) {
+            sfx.play('wrong');
+            alert("SYSTEM ERROR: Lifelines disabled in Breach Mode!");
+            return;
+        }
+
         if(store.data.inventory[type] > 0) {
             store.data.inventory[type]--;
-            sfx.click();
-            
-            if(type === 'skip') { 
-                clearInterval(this.timer); 
-                this.qIdx++; 
-                this.loadQ(); 
-            }
-            
-            if(type === '5050') {
+            sfx.play('click');
+
+            if(type === 'skip') {
+                clearInterval(this.timer);
+                this.qIdx++;
+                this.loadQ();
+            } 
+            else if(type === '5050') {
                 const ans = this.qs[this.qIdx].answer;
                 const opts = Array.from(document.querySelectorAll('.option-btn'));
                 let removed = 0;
-                
-                opts.forEach(o => { 
-                    if(o.innerText !== ans && removed < 2) { 
+                opts.forEach(o => {
+                    if(o.innerText !== ans && removed < 2) {
                         o.style.visibility = 'hidden';
-                        removed++; 
+                        removed++;
                     }
                 });
             }
@@ -595,87 +638,80 @@ this.qs = list.slice(0, qCount);
     },
 
     endGame: function() {
-        this.active = false; 
-if (this.timer) {
-    clearInterval(this.timer);
-    this.timer = null;
-}
+        this.active = false;
+        clearInterval(this.timer);
         
         store.data.stats.matches++;
         store.addXP(this.score);
-        
+
         document.getElementById('final-score').innerText = this.score;
         document.getElementById('res-correct').innerText = store.data.stats.correct;
-        
         document.getElementById('game-screen').classList.remove('breach-mode');
+
         ui.showScreen('result');
-        
-        if(this.score > 50) sfx.correct();
-    },
-
-    goHome: function() { 
-        sfx.click(); 
-        clearInterval(this.timer); 
-        ui.closeModal(); 
-        ui.showScreen('home'); 
-    },
-
-    shareScore: function() {
-        const rank = document.getElementById('p-rank').innerText;
-        const t = `MISSION REPORT:\nAgent ${store.data.name} scored ${this.score} BITS in TRY v5.1!\nRank: ${rank}\nCan you hack the system?`;
-        
-        if(navigator.share) {
-            navigator.share({ title: 'TRY System v5.1', text: t, url: window.location.href });
-        } else { 
-            navigator.clipboard.writeText(t); 
-            alert("Report copied to clipboard!"); 
-        }
-    },
-
-    toggleSound: function() { 
-        store.data.settings.sound = !store.data.settings.sound; 
-        store.save(); 
-        const btn = document.getElementById('btn-sound');
-        if(btn) btn.innerText = store.data.settings.sound ? "ON" : "OFF";
-        if(btn) btn.className = store.data.settings.sound ? "toggle-btn on" : "toggle-btn";
+        if(this.score > 50) sfx.play('correct');
     },
 
     genLeaderboard: function() {
-        const list = document.getElementById('leaderboard-list'); 
+        const list = document.getElementById('leaderboard-list');
         list.innerHTML = '';
-        
         const ranks = [
-            {name: "VampireSquad", xp: 15000}, 
-            {name: "AI_Ghost", xp: 8500}, 
+            {name: "VampireSquad", xp: 15000},
+            {name: "AI_Ghost", xp: 8500},
             {name: "System_Admin", xp: 5000},
             {name: store.data.name || "You", xp: store.data.xp}
         ].sort((a,b) => b.xp - a.xp);
-        
-        ranks.forEach((r,i) => { 
+
+        ranks.forEach((r,i) => {
             const isUser = r.name === (store.data.name || "You");
             list.innerHTML += `
-                <div class="rank-row ${isUser ? 'highlight' : ''}">
+                <div style="display:flex; justify-content:space-between; padding:10px; border-bottom:1px solid #333; ${isUser ? 'color:var(--primary); font-weight:bold;' : ''}">
                     <span>#${i+1} ${r.name}</span>
                     <span>${r.xp} XP</span>
-                </div>`; 
+                </div>`;
         });
     },
 
     genAchievements: function() {
-        const list = document.getElementById('achievement-list'); 
+        const list = document.getElementById('achievement-list');
         list.innerHTML = '';
-        
         store.achievList.forEach(a => {
             const unlocked = store.data.achievements.includes(a.id);
             list.innerHTML += `
-                <div class="achievement-row ${unlocked ? 'unlocked' : ''}">
-                    <i class="fas fa-${unlocked ? 'check-circle' : 'lock'}"></i>
-                    <div class="ach-info">
-                        <h4>${a.title}</h4>
-                        <p>${a.desc}</p>
+                <div style="display:flex; align-items:center; gap:10px; padding:10px; border-bottom:1px solid #333; opacity:${unlocked ? 1 : 0.5}">
+                    <i class="fas fa-${unlocked ? 'check-circle' : 'lock'}" style="color:${unlocked ? 'var(--success)' : '#555'}"></i>
+                    <div>
+                        <h4 style="margin:0; color:${unlocked ? '#fff' : '#888'}">${a.title}</h4>
+                        <p style="margin:0; font-size:0.8rem; color:#666;">${a.desc}</p>
                     </div>
                 </div>`;
         });
+    },
+
+    shareScore: function() {
+        const rank = document.getElementById('p-rank').innerText;
+        const text = `MISSION REPORT:\nAgent ${store.data.name} scored ${this.score} BITS in TRY v5.2!\nRank: ${rank}\nCan you hack the system?`;
+        
+        if(navigator.share) {
+            navigator.share({ title: 'TRY System v5.2', text: text, url: window.location.href });
+        } else {
+            navigator.clipboard.writeText(text);
+            alert("Report copied to clipboard!");
+        }
+    },
+
+    toggleSound: function() {
+        store.data.settings.sound = !store.data.settings.sound;
+        store.save();
+        const btn = document.querySelector('.fa-volume-up');
+        if(btn) btn.style.opacity = store.data.settings.sound ? "1" : "0.3";
+    },
+    
+    goHome: function() {
+        sfx.play('click');
+        clearInterval(this.timer);
+        ui.closeModal();
+        ui.showScreen('home');
     }
 };
 
