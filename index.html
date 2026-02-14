@@ -2,39 +2,49 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-<meta name="description" content="TRY Ultimate Hacker Quiz Game with Mining System">
+    <meta name="description" content="TRY Ultimate Hacker Quiz Game with Mining System">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta http-equiv="x-dns-prefetch-control" content="on">
     <title>TRY - Ultimate System v5.1</title>
     
+    <!-- PWA & SEO Meta Tags -->
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#00f3ff">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    
+    <!-- Security Policy -->
     <meta http-equiv="Content-Security-Policy" content="default-src 'self';
-img-src 'self' data: https:;
-style-src 'self' 'unsafe-inline' https:;
-script-src 'self' 'unsafe-inline' https:;
-font-src 'self' https: data:;">
+        img-src 'self' data: https:;
+        style-src 'self' 'unsafe-inline' https:;
+        script-src 'self' 'unsafe-inline' https:;
+        font-src 'self' https: data:;">
+    
+    <!-- Icons -->
     <link rel="icon" type="image/png" href="assets/icons/icon-192.png">
     <link rel="shortcut icon" href="assets/icons/icon-192.png">
     <link rel="apple-touch-icon" href="assets/icons/icon-192.png">
 
+    <!-- Open Graph -->
     <meta property="og:title" content="TRY - Ultimate System v5.1">
     <meta property="og:description" content="Join the elite hackers. Test your knowledge, mine crypto, and breach the system.">
     <meta property="og:image" content="assets/icons/icon-512.png">
     
+    <!-- Fonts & Icons -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;700;900&family=Share+Tech+Mono&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-<link rel="preload" as="style" href="css/style.css?v=5.1">
+    
+    <!-- Stylesheets -->
+    <link rel="preload" as="style" href="css/style.css?v=5.1">
     <link rel="stylesheet" href="css/style.css?v=5.1">
     <link rel="stylesheet" href="css/responsive.css?v=5.1">
 </head>
 <body class="theme-cyan"> 
     
+    <!-- Boot Screen -->
     <div id="boot-screen">
         <div class="terminal-loader">
             <div class="text">SYSTEM_INITIALIZING_V5.1...</div>
@@ -43,8 +53,10 @@ font-src 'self' https: data:;">
         </div>
     </div>
 
+    <!-- Main Application Container -->
     <div class="cyber-container hidden" id="main-app">
         
+        <!-- Header / Top Bar -->
         <header class="top-bar">
             <div class="profile-info" onclick="ui.openModal('profile')">
                 <div class="avatar"><i class="fas fa-user-secret"></i></div>
@@ -58,12 +70,14 @@ font-src 'self' https: data:;">
             </div>
         </header>
 
+        <!-- Screen: Home -->
         <section id="home-screen" class="screen active">
             <div class="logo-area">
                 <h1 class="glitch-text" data-text="TRY">TRY</h1>
                 <p class="subtitle">SECURE CONNECTION ESTABLISHED</p>
             </div>
             
+            <!-- Mining Widget -->
             <div class="mining-widget" onclick="ui.openModal('mining')">
                 <div class="mining-header">
                     <i class="fas fa-hammer"></i> MINING PROTOCOL
@@ -77,6 +91,7 @@ font-src 'self' https: data:;">
                 </div>
             </div>
 
+            <!-- Main Menu -->
             <div class="menu-grid">
                 <button class="cyber-btn primary" onclick="app.showCategorySelection()">
                     <i class="fas fa-play"></i> START MISSION
@@ -100,6 +115,7 @@ font-src 'self' https: data:;">
             </div>
         </section>
 
+        <!-- Screen: Category Selection -->
         <section id="category-screen" class="screen hidden">
             <h2 class="screen-title">SELECT TARGET</h2>
             <div class="category-list" id="category-container">
@@ -111,6 +127,7 @@ font-src 'self' https: data:;">
             <button class="back-btn" onclick="app.goHome()">ABORT</button>
         </section>
 
+        <!-- Screen: Gameplay -->
         <section id="game-screen" class="screen hidden">
             <div id="breach-overlay" class="hidden">WARNING: BREACH DETECTED</div>
             <div class="game-hud">
@@ -128,6 +145,7 @@ font-src 'self' https: data:;">
             <div class="options-area" id="options-container"></div>
         </section>
 
+        <!-- Screen: Result -->
         <section id="result-screen" class="screen hidden">
             <div class="result-box">
                 <h2 id="result-title">MISSION COMPLETE</h2>
@@ -145,17 +163,21 @@ font-src 'self' https: data:;">
             </div>
         </section>
 
+        <!-- Footer -->
         <footer class="game-footer">Developed by <span class="author-name">Muhammad Shourov</span></footer>
 
+        <!-- Modals Overlay -->
         <div id="modal-overlay" class="hidden">
             
+            <!-- Modal: Register -->
             <div id="modal-register" class="modal-box hidden">
                 <h3>IDENTITY VERIFICATION</h3>
-                <input type="text" id="reg-name" class="cyber-input" placeholder="Enter Codename" maxlength="15">
+                <input type="text" id="reg-name" class="cyber-input" placeholder="Enter Codename" maxlength="15" autocomplete="off">
                 <input type="number" id="reg-age" class="cyber-input" placeholder="Enter Age" max="99">
                 <button class="cyber-btn primary" onclick="app.registerUser()">GRANT ACCESS</button>
             </div>
 
+            <!-- Modal: Mining -->
             <div id="modal-mining" class="modal-box hidden">
                 <h3>CRYPTO MINER v1.0</h3>
                 <div class="mining-animation"><i class="fas fa-server"></i> <i class="fas fa-network-wired"></i> <i class="fas fa-coins"></i></div>
@@ -167,12 +189,14 @@ font-src 'self' https: data:;">
                 <button class="cyber-btn small" onclick="ui.closeModal()">CLOSE</button>
             </div>
 
+            <!-- Modal: Achievements -->
             <div id="modal-achievements" class="modal-box hidden">
                 <h3>MEDALS & HONORS</h3>
                 <div class="achievement-list" id="achievement-list"></div>
                 <button class="cyber-btn small" onclick="ui.closeModal()">CLOSE</button>
             </div>
 
+            <!-- Modal: Shop -->
             <div id="modal-shop" class="modal-box hidden">
                 <h3>BLACK MARKET</h3>
                 <div class="tab-menu">
@@ -199,6 +223,7 @@ font-src 'self' https: data:;">
                 <button class="cyber-btn small" onclick="ui.closeModal()">EXIT</button>
             </div>
 
+            <!-- Modal: Profile -->
             <div id="modal-profile" class="modal-box hidden">
                 <h3>AGENT DOSSIER</h3>
                 
@@ -219,11 +244,15 @@ font-src 'self' https: data:;">
                         <small>WRONG</small>
                         <span id="p-wrong">0</span>
                     </div>
+                    <div class="stat-box blue">
+                        <small>GAMES PLAYED</small>
+                        <span id="p-games">0</span>
+                    </div>
                     <div class="stat-box gold">
                         <small>TOTAL MINED</small>
                         <span id="p-mined">0</span>
                     </div>
-                    <div class="stat-box cyan">
+                    <div class="stat-box cyan" style="grid-column: span 2;">
                         <small>ACCURACY</small>
                         <span id="p-acc">0%</span>
                     </div>
@@ -239,12 +268,14 @@ font-src 'self' https: data:;">
                 <button class="cyber-btn small" onclick="ui.closeModal()">CLOSE</button>
             </div>
 
+            <!-- Modal: Leaderboard -->
             <div id="modal-leaderboard" class="modal-box hidden">
                 <h3>GLOBAL RANKING</h3>
                 <div class="leaderboard-list" id="leaderboard-list"></div>
                 <button class="cyber-btn small" onclick="ui.closeModal()">CLOSE</button>
             </div>
 
+            <!-- Modal: Settings -->
             <div id="modal-settings" class="modal-box hidden">
                 <h3>SYSTEM CONFIG</h3>
                 <div class="setting-row"><span>Sound</span> <button class="toggle-btn on" id="btn-sound" onclick="app.toggleSound()">ON</button></div>
@@ -256,6 +287,7 @@ font-src 'self' https: data:;">
         </div>
     </div>
 
+    <!-- Scripts -->
     <script src="js/questions.js?v=5.1"></script>
     <script src="js/app.js?v=5.1"></script>
     <script>
