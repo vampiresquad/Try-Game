@@ -11,7 +11,7 @@
     const templates = {
         cyber_security: [
             // --- BASIC & HISTORY ---
-            { q: "What does '%s' mean in cybersecurity?", a: "%s" }, // Placeholder logic preserved
+            { q: "What does '%s' mean in cybersecurity?", a: "%s" }, // Placeholder logic
             { q: "Which of the following is a strong password?", a: "Xy_9#mZ@2026", opts: ["12345678", "iloveyou", "admin123", "Xy_9#mZ@2026"] },
             { q: "Who is known as a 'White Hat' hacker?", a: "Ethical Security Expert", opts: ["Cyber Criminal", "Ethical Security Expert", "Script Kiddie", "Dark Web User"] },
             { q: "What is 'DDoS' attack?", a: "Distributed Denial of Service", opts: ["Data Download of System", "Digital Domain Service", "Distributed Denial of Service", "Direct Disk Operating System"] },
@@ -237,7 +237,8 @@
                 // Handle Static Questions
                 qText = tmpl.q;
                 aText = tmpl.a;
-                qOpts = shuffleArray([...tmpl.opts]); // Copy array to prevent reference issues
+                // Safety check for opts
+                qOpts = tmpl.opts ? shuffleArray([...tmpl.opts]) : generateDistractors(aText, cat);
             }
 
             finalQuestionBank.push({
