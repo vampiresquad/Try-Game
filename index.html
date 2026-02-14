@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>TRY - Ultimate System v5.0</title>
+    <title>TRY - Ultimate System v5.1</title>
     
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#00f3ff">
@@ -12,7 +12,7 @@
     <link rel="icon" type="image/png" href="assets/icons/icon-192.png">
     <link rel="apple-touch-icon" href="assets/icons/icon-192.png">
 
-    <meta property="og:title" content="TRY - Ultimate System v5.0">
+    <meta property="og:title" content="TRY - Ultimate System v5.1">
     <meta property="og:description" content="Join the elite hackers. Test your knowledge, mine crypto, and breach the system.">
     <meta property="og:image" content="assets/icons/icon-512.png">
     
@@ -21,14 +21,14 @@
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;700;900&family=Share+Tech+Mono&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
-    <link rel="stylesheet" href="css/style.css?v=5.0">
-    <link rel="stylesheet" href="css/responsive.css?v=5.0">
+    <link rel="stylesheet" href="css/style.css?v=5.1">
+    <link rel="stylesheet" href="css/responsive.css?v=5.1">
 </head>
 <body class="theme-cyan"> 
     
     <div id="boot-screen">
         <div class="terminal-loader">
-            <div class="text">SYSTEM_INITIALIZING_V5.0...</div>
+            <div class="text">SYSTEM_INITIALIZING_V5.1...</div>
             <div class="progress-line"></div>
             <div class="log" id="boot-log">LOADING MODULES...</div>
         </div>
@@ -56,18 +56,17 @@
             </div>
             
             <div class="mining-widget" onclick="ui.openModal('mining')">
-    <div class="mining-header">
-        <i class="fas fa-hammer"></i> MINING PROTOCOL
-        <span id="mining-status" class="status-offline">OFFLINE</span>
-    </div>
-    <div class="mining-details">
-        <span>RATE: <span id="mining-rate-display">0</span> BITS/H</span>
-        <div class="live-dots hidden" id="mining-live-anim">
-            <span>.</span><span>.</span><span>.</span>
-        </div>
-    </div>
-</div>
-
+                <div class="mining-header">
+                    <i class="fas fa-hammer"></i> MINING PROTOCOL
+                    <span id="mining-status" class="status-offline">OFFLINE</span>
+                </div>
+                <div class="mining-details">
+                    <span>RATE: <span id="mining-rate-display">0</span> BITS/H</span>
+                    <div class="live-dots hidden" id="mining-live-anim">
+                        <span>.</span><span>.</span><span>.</span>
+                    </div>
+                </div>
+            </div>
 
             <div class="menu-grid">
                 <button class="cyber-btn primary" onclick="app.showCategorySelection()">
@@ -192,45 +191,50 @@
             </div>
 
             <div id="modal-profile" class="modal-box hidden">
-    <h3>AGENT DOSSIER</h3>
-    
-    <div class="profile-header-section">
-        <div class="p-avatar-large"><i class="fas fa-user-secret"></i></div>
-        <div class="p-identity">
-            <h2 id="p-name">Agent Name</h2>
-            <p class="p-sub">AGE: <span id="p-age">--</span> | <span id="p-rank" class="rank-text">Rookie</span></p>
-        </div>
-    </div>
+                <h3>AGENT DOSSIER</h3>
+                
+                <div class="profile-header-section">
+                    <div class="p-avatar-large"><i class="fas fa-user-secret"></i></div>
+                    <div class="p-identity">
+                        <h2 id="p-name">Agent Name</h2>
+                        <p class="p-sub">AGE: <span id="p-age">--</span> | <span id="p-rank" class="rank-text">Rookie</span></p>
+                    </div>
+                </div>
 
-    <div class="profile-stats-grid">
-        <div class="stat-box green">
-            <small>CORRECT</small>
-            <span id="p-correct">0</span>
-        </div>
-        <div class="stat-box red">
-            <small>WRONG</small>
-            <span id="p-wrong">0</span>
-        </div>
-        <div class="stat-box gold">
-            <small>TOTAL MINED</small>
-            <span id="p-mined">0</span>
-        </div>
-        <div class="stat-box cyan">
-            <small>ACCURACY</small>
-            <span id="p-acc">0%</span>
-        </div>
-    </div>
+                <div class="profile-stats-grid">
+                    <div class="stat-box green">
+                        <small>CORRECT</small>
+                        <span id="p-correct">0</span>
+                    </div>
+                    <div class="stat-box red">
+                        <small>WRONG</small>
+                        <span id="p-wrong">0</span>
+                    </div>
+                    <div class="stat-box gold">
+                        <small>TOTAL MINED</small>
+                        <span id="p-mined">0</span>
+                    </div>
+                    <div class="stat-box cyan">
+                        <small>ACCURACY</small>
+                        <span id="p-acc">0%</span>
+                    </div>
+                </div>
 
-    <div class="profile-badges-section">
-        <h4>EARNED BADGES</h4>
-        <div id="p-badges-grid" class="badges-grid">
-            <span class="no-badge">No Intel Data</span>
-        </div>
-    </div>
+                <div class="profile-badges-section">
+                    <h4>EARNED BADGES</h4>
+                    <div id="p-badges-grid" class="badges-grid">
+                        <span class="no-badge">No Intel Data</span>
+                    </div>
+                </div>
 
-    <button class="cyber-btn small" onclick="ui.closeModal()">CLOSE</button>
-</div>
+                <button class="cyber-btn small" onclick="ui.closeModal()">CLOSE</button>
+            </div>
 
+            <div id="modal-leaderboard" class="modal-box hidden">
+                <h3>GLOBAL RANKING</h3>
+                <div class="leaderboard-list" id="leaderboard-list"></div>
+                <button class="cyber-btn small" onclick="ui.closeModal()">CLOSE</button>
+            </div>
 
             <div id="modal-settings" class="modal-box hidden">
                 <h3>SYSTEM CONFIG</h3>
@@ -243,10 +247,10 @@
         </div>
     </div>
 
-    <script src="js/questions.js?v=5.0"></script>
-    <script src="js/app.js?v=5.0"></script>
+    <script src="js/questions.js?v=5.1"></script>
+    <script src="js/app.js?v=5.1"></script>
     <script>
-        // Register PWA Service Worker (Performance Optimized)
+        // Register PWA Service Worker
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
                 navigator.serviceWorker.register('service-worker.js')
